@@ -1,0 +1,25 @@
+name: Deploy to luganodes
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        script: |
+          whoami
+          cd ./dev/automation-mvp
+          git pull
+          npm i
+          npm run build
+          npm run kill
+          npm run start > /dev/null 2>&1 &
+          echo "Deployed"
