@@ -1,4 +1,5 @@
 import { EVMChains, EVMChainId } from "../../chains/types";
+import { AxiosRequestConfig } from "axios";
 import HttpFetcher from "../../fetchers/http-fetcher";
 
 type Address = string;
@@ -45,18 +46,18 @@ export type Price = {
   timestamp: number;
 };
 
-export class DefinedProviderApi {
+export class DefinedProviderHttpApi {
   private cronPattern?: string;
 
   constructor(cronPattern?: string) {
     this.cronPattern = cronPattern;
   }
 
-  public getTokenPrice(
+  public static getTokenPrice(
     token: Address,
     chainId: ChainInput,
     timestamp?: number,
-  ): HttpFetcher<Price> {
+  ): AxiosRequestConfig {
     const chainIdNumber = new DefinedProvider().getChainId(chainId);
 
     let query;
@@ -86,6 +87,6 @@ export class DefinedProviderApi {
       method: "post",
       data: JSON.stringify({ query }),
     };
-    return new HttpFetcher(config, this.cronPattern);
+    return config;
   }
 }
