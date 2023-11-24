@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { EVMChainId } from "./chains/types";
-import { DefinedProviderApi } from "./providers/defined";
+import { DefinedProviderHttpApi } from "./providers/defined";
 
-const provider = new DefinedProviderApi();
+const provider = new DefinedProviderHttpApi();
 
 const fetcher = provider.getTokenPrice(
   "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",

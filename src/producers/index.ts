@@ -1,22 +1,35 @@
+import DataProducer from "./producer";
 import DataFetcher from "../fetchers/data-fetcher";
 import HttpFetcher from "../fetchers/http-fetcher";
 import { BufferLike } from "../fetchers/types";
 import { DefinedProviderHttpApi } from "../providers/defined";
+import { Worker } from "worker_threads";
 
-export default class DataProducer {
-  constructor(
-    private pubsubQueue: PubSubQueue,
-    private endpoint: Endpoint,
-  ) {}
+export class DataProducerWokerManager {
+  private workers: Map<string, Worker> = new Map();
 
-  start() {
-    const fetcher = this.endpoint.getFetcher();
-    fetcher.onData((data) => {
-      this.pubsubQueue.publish(data);
+  constructor(private pubSubQueue: PubSubQueue) {
+    this.pubSubQueue = pubSubQueue;
+  }
+
+  create(id: string, endpoint: Endpoint) {
+    const worker = new Worker("./producer_worker.ts", {
+      workerData: {
+        endpoint,
+      },
     });
-    fetcher.onError((error) => {
-      this.pubsubQueue.publish(error);
+    worker.on("message", (message) => {
+      console.log(`Message from worker ${id}: ${message}`);
+      this.onMessageFromProducer(message);
     });
+    worker.on("error", (err) => {
+      console.log(`Error from worker ${id}: ${err}`);
+    });
+    this.workers.set(id, worker);
+  }
+
+  onMessageFromProducer(message: string) {
+    this.pubSubQueue.publish(message);
   }
 }
 
@@ -32,12 +45,12 @@ export class Endpoint {
     public providerId: number,
   ) {}
 
-  getFetcher(): DataFetcher<string> {
+  getFetcher(): DataFetcher<BufferLike> {
     fetcherFromEndpoint(this);
   }
 }
 
-function fetcherFromEndpoint(endpoint: Endpoint): DataFetcher<string> {
+function fetcherFromEndpoint(endpoint: Endpoint): DataFetcher<BufferLike> {
   if (endpoint.name === "getTokenPrices") {
     DefinedProviderHttpApi.getTokenPrice();
   }
