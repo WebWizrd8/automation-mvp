@@ -4,6 +4,7 @@ import { BufferLike, Callback } from "./types";
 interface IDataFetcher<ResType> {
   onData(callback: Callback<ResType>): void;
   onError(callback: Callback<ResType>): void;
+  startFetching(subscribeCmd: BufferLike): Promise<void>;
   stopFetching(): void;
 }
 
@@ -11,6 +12,7 @@ interface IDataFetcher<ResType> {
 export default abstract class DataFetcher<T> implements IDataFetcher<T> {
   abstract onData(callback: Callback<T>): void;
   abstract onError(callback: Callback<T>): void;
+  abstract startFetching(subscribeCmd: BufferLike): Promise<void>;
   abstract stopFetching(): void;
 }
 

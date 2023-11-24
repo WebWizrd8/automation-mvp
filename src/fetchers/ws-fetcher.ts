@@ -63,7 +63,6 @@ export default class WebSocketFetcher<T> extends PubSubDataFetcher<T> {
 
   async startFetching(subscribeCmd: BufferLike): Promise<void> {
     await this.connect();
-
     console.log("Sending subscribe command");
     this.sendData(subscribeCmd);
   }

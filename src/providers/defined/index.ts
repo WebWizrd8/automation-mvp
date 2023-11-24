@@ -1,6 +1,7 @@
 import { EVMChains, EVMChainId } from "../../chains/types";
-import { AxiosRequestConfig } from "axios";
 import HttpFetcher from "../../fetchers/http-fetcher";
+import DataFetcher from "../../fetchers/data-fetcher";
+import { BufferLike } from "../../fetchers/types";
 
 type Address = string;
 type ChainInput = EVMChainId | EVMChains;
@@ -39,6 +40,12 @@ export default class DefinedProvider {
   }
 }
 
+export type GetTokenPricesInput = {
+  token: Address;
+  networkId: ChainInput;
+  timestamp?: number;
+};
+
 export type Price = {
   address: Address;
   networkId: number;
@@ -47,24 +54,24 @@ export type Price = {
 };
 
 export class DefinedProviderHttpApi {
-  private cronPattern?: string;
-
-  constructor(cronPattern?: string) {
-    this.cronPattern = cronPattern;
+  public getFetcher(
+    name: string,
+    _chainId: number,
+    input: string,
+  ): DataFetcher<BufferLike> {
+    if (name === "getTokenPrices") {
+      return this.getTokenPrice(JSON.parse(input));
+    }
+    throw new Error(`Unknown trigger name: ${name}`);
   }
 
-  public static getTokenPrice(
-    token: Address,
-    chainId: ChainInput,
-    timestamp?: number,
-  ): AxiosRequestConfig {
-    const chainIdNumber = new DefinedProvider().getChainId(chainId);
-
+  public getTokenPrice(input: GetTokenPricesInput): DataFetcher<BufferLike> {
+    const { token, networkId, timestamp } = input;
     let query;
     if (!timestamp) {
       query = `
         query {
-				getTokenPrices(inputs: [{address: "${token}", networkId: ${chainIdNumber}}]) {
+				getTokenPrices(inputs: [{address: "${token}", networkId: ${networkId}}]) {
                   address
                   networkId
                   priceUsd
@@ -74,7 +81,7 @@ export class DefinedProviderHttpApi {
     } else {
       query = `
         query {
-				getTokenPrices(inputs:[{address: "${token}", networkId: ${chainIdNumber}, timestamp: ${timestamp}}]) {
+				getTokenPrices(inputs:[{address: "${token}", networkId: ${networkId}, timestamp: ${timestamp}}]) {
                   address
                   networkId
                   priceUsd
@@ -87,6 +94,7 @@ export class DefinedProviderHttpApi {
       method: "post",
       data: JSON.stringify({ query }),
     };
-    return config;
+    const fetcher = new HttpFetcher<BufferLike>(config);
+    return fetcher;
   }
 }

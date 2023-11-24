@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from "axios";
 import DataFetcher from "./data-fetcher";
 import { EventEmitter } from "events";
 import { CronJob } from "cron";
-import { Callback } from "./types";
+import { BufferLike, Callback } from "./types";
 
 export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
   axoisConfig: AxiosRequestConfig;
@@ -18,7 +18,7 @@ export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
     this.task = null;
   }
 
-  async startFetching() {
+  async startFetching(_subscribeCmd: BufferLike) {
     if (this.task) {
       console.warn("Fetcher is already scheduled");
       return;
