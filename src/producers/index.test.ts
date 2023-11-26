@@ -1,31 +1,67 @@
 import { DataProducerWokerManager } from ".";
-import DataProducer from "./producer";
-import mockAxios from "jest-mock-axios";
-import { EVMChainId } from "../chains/types";
-import { PubSubQueue } from "./queue";
-import { Endpoint, TriggerRequest } from "./types";
-import { GetTokenPricesInput } from "../providers/defined";
+import { BufferLike } from "../fetchers/types";
+import { PubSubConsumer, PubSubPublisher, RedisPubSubSystem } from "./queue";
+import { getTriggerRequestFromId } from "../db";
+import { getNewBlocksChannel } from "./types";
 
-describe("DefinedProvider", () => {
-  let manager: DataProducerWokerManager;
-  let producer: DataProducer;
+describe("Producers Test", () => {
+  let pubsubQueue: RedisPubSubSystem;
+  let publisher: PubSubPublisher;
+  let consumer: PubSubConsumer;
 
-  beforeAll(() => {
-    const pubsubQueue = new PubSubQueue();
-    manager = new DataProducerWokerManager(pubsubQueue);
+  beforeEach(() => {
+    pubsubQueue = new RedisPubSubSystem();
+    publisher = new PubSubPublisher(pubsubQueue);
+    consumer = new PubSubConsumer(pubsubQueue);
   });
 
-  it("should produce data", async () => {
-    const getTokenPricersInput: GetTokenPricesInput = {
-      token: "0x6b175474e89094c44da98b954eedeac495271d0f",
-      networkId: 1,
+  afterEach(async () => {
+    await pubsubQueue.close();
+  });
+
+  it("should receive successful subscription response", async () => {
+    const callback = jest.fn();
+    const printCallback = (message: BufferLike) => {
+      console.log("printCallback", message);
     };
-    const id = manager.create(
-      "test_1",
-      new TriggerRequest(1, 2, 1, 1, JSON.stringify(getTokenPricersInput)),
+
+    await consumer.subscribe("test_1", callback);
+    await consumer.subscribe("test_1", printCallback);
+
+    const manager = new DataProducerWokerManager(publisher);
+    const id = manager.create("test_1", getTriggerRequestFromId(0));
+    manager.start(id);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    manager.stop(id);
+    expect(callback).toHaveBeenCalled();
+  }, 3500);
+
+  it("should receive tokenprice on each block", async () => {
+    if (!process.env.DEFINED_API) {
+      throw new Error("DEFINED_URL env variable not set");
+    }
+    const manager = new DataProducerWokerManager(publisher);
+    const newBlockChannelId = getNewBlocksChannel(1);
+    const id = manager.create(newBlockChannelId, getTriggerRequestFromId(0));
+    const printCallback = (message: BufferLike) => {
+      console.log("printCallback", message);
+    };
+    await consumer.subscribe(newBlockChannelId, printCallback);
+    const getMainnetTokenPricesId = manager.create(
+      "test_2",
+      getTriggerRequestFromId(1),
     );
-    console.log(`Created worker with id: ${id}`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Finishing Test");
-  });
+
+    const getMainnetTokenPricesCallback = jest.fn();
+    await consumer.subscribe("test_2", getMainnetTokenPricesCallback);
+
+    manager.start(id);
+    manager.start(getMainnetTokenPricesId);
+    //Timeout to wait for two blocks to be mined
+    await new Promise((resolve) => setTimeout(resolve, 25000));
+    manager.stop(id);
+    manager.stop(getMainnetTokenPricesId);
+    //Callback is called 3 times because: subscribed + 2 blocks
+    expect(getMainnetTokenPricesCallback).toHaveBeenCalledTimes(3);
+  }, 25500);
 });

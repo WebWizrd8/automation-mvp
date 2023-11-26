@@ -1,11 +1,12 @@
 import { Worker } from "worker_threads";
-import { PubSubQueue } from "./queue";
-import { TriggerRequest } from "./types";
+import { PubSubPublisher } from "./queue";
+import { TriggerRequest } from "../triggers";
 import { getLogger } from "../utils/logger";
 
 export interface WorkerDetails {
   worker: Worker;
   status: string;
+  triggerRequest: TriggerRequest;
 }
 
 const logger = getLogger("DataProducerWokerManager");
@@ -13,7 +14,7 @@ const logger = getLogger("DataProducerWokerManager");
 export class DataProducerWokerManager {
   private workers: Map<string, WorkerDetails> = new Map();
 
-  constructor(private pubSubQueue: PubSubQueue) {
+  constructor(private pubSubQueue: PubSubPublisher) {
     this.pubSubQueue = pubSubQueue;
   }
 
@@ -23,9 +24,9 @@ export class DataProducerWokerManager {
         triggerRequest,
       },
     });
-    worker.on("message", (message) => {
+    worker.on("message", async (message) => {
       logger.info(`Message from worker ${id}`, message);
-      this.onMessageFromProducer(id, message);
+      await this.onMessageFromProducer(id, message);
     });
     worker.on("error", (err) => {
       logger.info(`Error from worker ${id}: ${err}`);
@@ -33,6 +34,7 @@ export class DataProducerWokerManager {
     const workerDetails: WorkerDetails = {
       worker,
       status: "created",
+      triggerRequest,
     };
     this.workers.set(id, workerDetails);
     return id;
@@ -41,20 +43,22 @@ export class DataProducerWokerManager {
   start(id: string) {
     const workerDetails = this.workers.get(id);
     if (workerDetails?.status === "created") {
-      workerDetails.worker.postMessage({ type: "start" });
+      workerDetails.worker.postMessage({
+        type: "start",
+      });
       workerDetails.status = "running";
     }
   }
 
   stop(id: string) {
     const workerDetails = this.workers.get(id);
-    if (workerDetails?.status === "running") {
+    if (workerDetails) {
       workerDetails.worker.postMessage({ type: "shutdown" });
       workerDetails.status = "stopped";
     }
   }
 
-  onMessageFromProducer(channelId: string, message: string) {
-    this.pubSubQueue.publish(channelId, message);
+  async onMessageFromProducer(channelId: string, message: string) {
+    await this.pubSubQueue.publish(channelId, message);
   }
 }

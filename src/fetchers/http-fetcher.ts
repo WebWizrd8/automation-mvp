@@ -2,40 +2,44 @@ import axios, { AxiosRequestConfig } from "axios";
 import DataFetcher from "./data-fetcher";
 import { EventEmitter } from "events";
 import { CronJob } from "cron";
-import { BufferLike, Callback } from "./types";
+import { Callback } from "./types";
+import { PubSubConsumer, RedisPubSubSystem } from "../producers/queue";
 
 export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
   axoisConfig: AxiosRequestConfig;
-  cronPattern?: string;
   eventEmitter: EventEmitter;
+  pubsubConsumer: PubSubConsumer;
+  channelId: string;
   task: CronJob | null;
 
-  constructor(axiosConfig: AxiosRequestConfig, cronPattern?: string) {
+  constructor(axiosConfig: AxiosRequestConfig, channelId: string) {
     super();
     this.axoisConfig = axiosConfig;
-    this.cronPattern = cronPattern;
     this.eventEmitter = new EventEmitter();
+    const pubsubQueue = new RedisPubSubSystem();
+    this.pubsubConsumer = new PubSubConsumer(pubsubQueue);
+    this.channelId = channelId;
     this.task = null;
   }
 
-  async startFetching(_subscribeCmd: BufferLike) {
+  async startFetching() {
     if (this.task) {
       console.warn("Fetcher is already scheduled");
       return;
     }
-    if (!this.cronPattern) {
-      await this.fetchData();
-      return;
-    }
+
     console.log("Starting fetcher...");
-    this.task = new CronJob(
-      this.cronPattern,
-      () => {
-        this.fetchData();
-      },
-      null,
-      true,
-    );
+    await this.pubsubConsumer.subscribe(this.channelId, async () => {
+      await this.fetchData();
+    });
+
+    // this.task = new CronJob(
+    //   this.cronPattern,
+    //   async () => {
+    //   },
+    //   null,
+    //   true,
+    // );
     console.log("Fetcher scheduled");
   }
 

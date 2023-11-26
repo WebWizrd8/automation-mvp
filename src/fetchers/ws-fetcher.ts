@@ -1,6 +1,8 @@
 import { PubSubDataFetcher } from "./data-fetcher";
 import { EventEmitter } from "events";
 import { BufferLike, Callback } from "./types";
+import WebSocket from "ws";
+import { getLogger } from "../utils/logger";
 
 const waitForOpenSocket = (socket: WebSocket) => {
   return new Promise((resolve) => {
@@ -14,17 +16,26 @@ const waitForOpenSocket = (socket: WebSocket) => {
   });
 };
 
+const logger = getLogger("WebSocketFetcher");
+
 export default class WebSocketFetcher<T> extends PubSubDataFetcher<T> {
   private url: string;
   private eventEmitter: EventEmitter;
   ws: WebSocket | null;
+  //onConnectCallback?: (ws: WebSocket) => Promise<void>;
+  subscribeCmd: BufferLike;
 
-  constructor(url: string) {
+  constructor(url: string, subscribeCmd: BufferLike) {
     super();
     this.url = url;
     this.eventEmitter = new EventEmitter();
     this.ws = null;
+    this.subscribeCmd = subscribeCmd;
   }
+
+  // async onConnect(callback: (ws: WebSocket) => Promise<void>) {
+  //   this.onConnectCallback = callback;
+  // }
 
   async connect(): Promise<void> {
     if (this.ws) {
@@ -33,8 +44,12 @@ export default class WebSocketFetcher<T> extends PubSubDataFetcher<T> {
     }
     this.ws = new WebSocket(this.url);
     await waitForOpenSocket(this.ws!);
+    // if (this.onConnectCallback) {
+    //   await this.onConnectCallback(this.ws!);
+    // }
 
     this.ws!.onmessage = ({ data }) => {
+      logger.debug(`Received data from websocket ${data}`);
       this.eventEmitter.emit("data", data);
     };
 
@@ -61,10 +76,10 @@ export default class WebSocketFetcher<T> extends PubSubDataFetcher<T> {
     this.eventEmitter.on("error", callback);
   }
 
-  async startFetching(subscribeCmd: BufferLike): Promise<void> {
+  async startFetching(): Promise<void> {
     await this.connect();
     console.log("Sending subscribe command");
-    this.sendData(subscribeCmd);
+    this.sendData(this.subscribeCmd);
   }
 
   sendData(data: BufferLike): void {

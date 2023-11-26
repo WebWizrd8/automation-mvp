@@ -1,7 +1,9 @@
+import dotenv from "dotenv";
 import { EVMChains, EVMChainId } from "../../chains/types";
 import HttpFetcher from "../../fetchers/http-fetcher";
 import DataFetcher from "../../fetchers/data-fetcher";
 import { BufferLike } from "../../fetchers/types";
+import ApiProvider, { ApiHttpInput } from "..";
 
 type Address = string;
 type ChainInput = EVMChainId | EVMChains;
@@ -53,19 +55,35 @@ export type Price = {
   timestamp: number;
 };
 
-export class DefinedProviderHttpApi {
+export class DefinedProviderHttpApi extends ApiProvider {
+  constructor() {
+    super();
+    dotenv.config();
+  }
+  getUrl(_chainId: number) {
+    return URL;
+  }
+
   public getFetcher(
     name: string,
     _chainId: number,
-    input: string,
+    type: string,
+    apiInputData: ApiHttpInput,
   ): DataFetcher<BufferLike> {
+    if (type !== "http") {
+      throw new Error(`Unknown type: ${type} for DefinedProviderHttpApi`);
+    }
+    const { input, channelIdForTick } = apiInputData;
     if (name === "getTokenPrices") {
-      return this.getTokenPrice(JSON.parse(input));
+      return this.getTokenPrice(JSON.parse(input), channelIdForTick);
     }
     throw new Error(`Unknown trigger name: ${name}`);
   }
 
-  public getTokenPrice(input: GetTokenPricesInput): DataFetcher<BufferLike> {
+  public getTokenPrice(
+    input: GetTokenPricesInput,
+    channeldIdForTick: string,
+  ): DataFetcher<BufferLike> {
     const { token, networkId, timestamp } = input;
     let query;
     if (!timestamp) {
@@ -94,7 +112,7 @@ export class DefinedProviderHttpApi {
       method: "post",
       data: JSON.stringify({ query }),
     };
-    const fetcher = new HttpFetcher<BufferLike>(config);
+    const fetcher = new HttpFetcher<BufferLike>(config, channeldIdForTick);
     return fetcher;
   }
 }

@@ -1,14 +1,17 @@
 import { BufferLike } from "../fetchers/types";
-import { TriggerRequest } from "./types";
+import { getLogger } from "../utils/logger";
+import { TriggerRequest } from "../triggers";
+
+const logger = getLogger("DataProducer");
 
 export default class DataProducer {
   constructor(private triggerRequest: TriggerRequest) {}
 
-  start(
+  async start(
     onData: (data: BufferLike) => void,
     onError: (error: BufferLike) => void,
-    subscribeCmd: BufferLike,
   ) {
+    console.log("Starting fetcher...");
     const fetcher = this.triggerRequest.getFethcher();
     fetcher.onData((data) => {
       onData(data);
@@ -17,7 +20,11 @@ export default class DataProducer {
     fetcher.onError((error) => {
       onError(error);
     });
-    fetcher.startFetching(subscribeCmd);
+    try {
+      await fetcher.startFetching();
+    } catch (e) {
+      logger.error("Error while staring fetcher ", e);
+    }
   }
 
   stop() {

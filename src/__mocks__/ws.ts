@@ -1,1 +1,1 @@
-export { WebSocket } from "mock-socket";
+export { WebSocket as default } from "mock-socket";

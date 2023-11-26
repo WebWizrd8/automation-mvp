@@ -1,10 +1,11 @@
-import winston from "winston";
+import winston, { Logger } from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import fs from "fs";
 
-let logger: winston.Logger;
-
 function stringify(obj: object) {
+  //check if obj in stringified already if so return
+  if (typeof obj === "string" || obj instanceof String) return obj;
+
   let cache: object[] = [];
   const str = JSON.stringify(obj, function (_key, value: object) {
     if (typeof value === "object" && value !== null) {
@@ -48,14 +49,14 @@ function transports(): winston.transport[] {
   return transports;
 }
 
-function init(filename: string): void {
+function init(filename: string): Logger {
   //Check if directory "logs" exists, if not create it
   if (!fs.existsSync("logs")) {
     fs.mkdirSync("logs");
     console.info("Directory logs created");
   }
 
-  logger = winston.createLogger({
+  const logger = winston.createLogger({
     format: winston.format.combine(
       winston.format.colorize({ all: true }),
       winston.format.timestamp({
@@ -79,13 +80,11 @@ function init(filename: string): void {
     exitOnError: false,
     transports: transports(),
   });
+  return logger;
 }
 
 function getLogger(filename: string): winston.Logger {
-  if (!logger) {
-    init(filename);
-  }
-  return logger;
+  return init(filename);
 }
 
 export { init, getLogger };

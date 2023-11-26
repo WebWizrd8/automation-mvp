@@ -6,9 +6,7 @@ describe("HttpFetcher", () => {
   let fetcher: WebSocketFetcher<string>;
   const url = "ws://localhost:1234";
 
-  beforeAll(() => {
-    fetcher = new WebSocketFetcher(url);
-  });
+  beforeAll(() => {});
 
   afterAll(() => {
     fetcher.stopFetching();
@@ -26,12 +24,14 @@ describe("HttpFetcher", () => {
   });
 
   it("should connect", async () => {
+    fetcher = new WebSocketFetcher(url, "hello");
     await fetcher.connect();
     expect(fetcher.ws).toBeDefined();
   });
 
   it("should send string data", async () => {
-    await fetcher.startFetching("hello");
+    fetcher = new WebSocketFetcher(url, "hello");
+    await fetcher.startFetching();
     await expect(wsServer).toReceiveMessage("hello");
   });
 
@@ -39,14 +39,16 @@ describe("HttpFetcher", () => {
     WS.clean();
     wsServer = new WS(url, { jsonProtocol: true });
     const data = { key: "value" };
-    await fetcher.startFetching(JSON.stringify(data));
+    fetcher = new WebSocketFetcher(url, JSON.stringify(data));
+    await fetcher.startFetching();
     await expect(wsServer).toReceiveMessage(data);
   });
 
   it("should handle string data", async () => {
     const callback = jest.fn();
+    fetcher = new WebSocketFetcher(url, "hello");
     fetcher.onData(callback);
-    await fetcher.startFetching("hello");
+    await fetcher.startFetching();
     wsServer.send("hello");
     expect(callback).toHaveBeenCalledWith("hello");
   });
