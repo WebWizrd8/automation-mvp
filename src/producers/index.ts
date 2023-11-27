@@ -9,9 +9,9 @@ export interface WorkerDetails {
   triggerRequest: TriggerRequest;
 }
 
-const logger = getLogger("DataProducerWokerManager");
+const logger = getLogger("DataProducerWorkerManager");
 
-export class DataProducerWokerManager {
+export class DataProducerWorkerManager {
   private workers: Map<string, WorkerDetails> = new Map();
 
   constructor(private pubSubQueue: PubSubPublisher) {
