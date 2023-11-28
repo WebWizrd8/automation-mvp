@@ -112,7 +112,12 @@ export class DefinedProviderHttpApi extends ApiProvider {
       method: "post",
       data: JSON.stringify({ query }),
     };
-    const fetcher = new HttpFetcher<BufferLike>(config, channeldIdForTick);
+    //Disable eslint no-any rule for dataProcessor
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fetcher = new HttpFetcher(config, channeldIdForTick, (data) => {
+      const prices = data.data.getTokenPrices;
+      return prices[0];
+    });
     return fetcher;
   }
 }

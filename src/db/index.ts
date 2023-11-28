@@ -45,16 +45,16 @@ export function getProviderFromId(id: number): ApiProvider {
 
 export function getTriggerRequestFromId(id: number): TriggerRequest {
   if (id === 0) {
-    const getTokenPricersInput = {
+    const getNewBlocks = {
       jsonrpc: "2.0",
       id: 2,
       method: "eth_subscribe",
       params: ["newHeads"],
     };
-    return new TriggerRequest(0, 0, 1, 0, JSON.stringify(getTokenPricersInput));
+    return new TriggerRequest(0, 0, 1, 0, JSON.stringify(getNewBlocks));
   } else if (id === 1) {
     const getTokenPricersInput = {
-      token: "0x6b175474e89094c44da98b954eedeac495271d0f",
+      token: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
       networkId: 1,
     };
     return new TriggerRequest(1, 1, 1, 1, JSON.stringify(getTokenPricersInput));

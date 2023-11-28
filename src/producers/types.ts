@@ -4,4 +4,3 @@ export function getNewBlocksChannel(chainId: number): string {
 // const pubSubSystem = new RedisPubSubSystem();
 // const newBlocksChannel = getNewBlocksChannel(chainId);
 // pubSubSystem.getSubscriberCount;
-

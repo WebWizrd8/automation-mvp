@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model alert {
+  id             Int         @id @default(autoincrement())
+  user_id        String
+  chain_id       Int
+  destination_id Int
+  name           String
+  chain          chain       @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model alert_condition {
+  id       Int                     @id @default(autoincrement())
+  alert_id Int
+  field    Unsupported("jsonpath")
+  operator String
+  value    Json
+}
+
+model chain {
+  id             Int              @id @default(autoincrement())
+  name           String
+  alert          alert[]
+  chain_endpoint chain_endpoint[]
+}
+
+model chain_endpoint {
+  id       Int    @id @default(autoincrement())
+  chain_id Int
+  type     String
+  url      String
+  chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model destination {
+  id      Int     @id @default(autoincrement())
+  user_id String
+  target  Json
+  alert   alert[]
+}
