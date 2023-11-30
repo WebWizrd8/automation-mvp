@@ -1,7 +1,14 @@
 import { getDestinationsForAlert } from "../db/alert";
-import { getDestinationPayloadForTelegram } from "../db/destination";
+import {
+  getDestinationPayloadForDiscord,
+  getDestinationPayloadForTelegram,
+} from "../db/destination";
 import { replaceTemplateValues } from "../templates";
 import bot from "../notifications/telegram";
+import {
+  getWebhook,
+  sendWebhookMessage,
+} from "../notifications/discord/webhook";
 
 export const handleAlerts = async (alertIds: number[], data: string) => {
   for (const alertId of alertIds) {
@@ -27,7 +34,13 @@ export const handleAlert = async (alertId: number, data: string) => {
         preparedResponse,
       );
     } else if (destination.type === "discord") {
-      console.log("Sending Discord message");
+      const discordPayload = await getDestinationPayloadForDiscord(
+        destination.id,
+      );
+      const { template, discord_destination } = discordPayload;
+      const preparedResponse = replaceTemplateValues(template, data);
+      const webhook = getWebhook(discord_destination.webhook_url);
+      await sendWebhookMessage(webhook, preparedResponse);
     }
   }
   console.log(destinationRecords);
