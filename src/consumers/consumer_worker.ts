@@ -2,29 +2,31 @@
 /* eslint-disable no-case-declarations */
 import { parentPort, workerData } from "worker_threads";
 import { find_matching_alerts } from "../db/functions";
+import { getLogger } from "../utils/logger";
+import { handleAlerts } from "./alert_handler";
 
 const { triggerId }: { triggerId: string } = workerData;
 
-console.log(`Consumer worker received id: ${triggerId}`);
+const logger = getLogger("consumer_worker");
+
+logger.info(`Consumer worker received id: ${triggerId}`);
 
 const run = () => {
   if (parentPort) {
     parentPort.on("message", async (message) => {
       switch (message.type) {
         case "start":
-          console.log("Starting worker");
-          console.log("Worker started");
           break;
         case "message":
-          console.log("Received message from producer", message.message);
+          logger.info("Received message from producer", message.message);
           // Find all alerts that are interested in this message
           const alerts = await find_matching_alerts(message.message);
-          console.log("Alerts found", alerts);
+          logger.info("Alerts found", alerts);
           //TODO: Send alerts to alerting system
-
+          if (alerts) await handleAlerts(alerts, message.message);
           break;
         case "shutdown":
-          console.log("Shutting down worker");
+          logger.info("Shutting down worker");
           // Clean up and close the worker
           process.exit(0);
       }

@@ -3,6 +3,7 @@ import { AlchemyProviderWsApi } from "../providers/alchemy";
 import { DefinedProviderHttpApi } from "../providers/defined";
 import { TriggerRequest } from "../triggers";
 import { getLogger } from "../utils/logger";
+import * as alert from "./alert";
 
 export interface EndpointRecord {
   id: number;
@@ -61,3 +62,7 @@ export function getTriggerRequestFromId(id: number): TriggerRequest {
   }
   throw new Error(`Unknown trigger request id: ${id}`);
 }
+
+export default {
+  ...alert,
+};

@@ -16,13 +16,6 @@ model alert {
   chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model alert_destination {
-  id             Int         @id @default(autoincrement())
-  alert_id       Int
-  destination_id Int
-  destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
 model alert_condition {
   id       Int                     @id @default(autoincrement())
   alert_id Int
@@ -49,6 +42,13 @@ model chain_endpoint {
 enum action_type {
   discord
   telegram
+}
+
+model alert_destination {
+  id             Int         @id @default(autoincrement())
+  alert_id       Int
+  destination_id Int
+  destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model destination {

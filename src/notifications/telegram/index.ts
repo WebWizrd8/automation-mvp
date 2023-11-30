@@ -24,6 +24,8 @@ bot
   .catch(console.error)
   .finally(() => console.log("Bot is running"));
 
+export default bot;
+
 /*
 const run = async () => {
   const randomString = generateRandomString();
