@@ -25,7 +25,7 @@ describe("Producers Test", () => {
 
   it("should receive tokenprice on each block", async () => {
     if (!process.env.DEFINED_API) {
-      throw new Error("DEFINED_URL env variable not set");
+      throw new Error("DEFINED_API env variable not set");
     }
     const manager = new DataProducerWorkerManager(publisher);
     const consumer_manager = new DataConsumerWorkerManager(consumer);
