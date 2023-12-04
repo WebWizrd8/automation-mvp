@@ -82,7 +82,7 @@ export class DefinedProviderHttpApi extends ApiProvider {
 
   public getTokenPrice(
     input: GetTokenPricesInput,
-    channeldIdForTick: string,
+    channelIdForTick: string,
   ): DataFetcher<BufferLike> {
     const { token, networkId, timestamp } = input;
     let query;
@@ -112,7 +112,12 @@ export class DefinedProviderHttpApi extends ApiProvider {
       method: "post",
       data: JSON.stringify({ query }),
     };
-    const fetcher = new HttpFetcher<BufferLike>(config, channeldIdForTick);
+    //Disable eslint no-any rule for dataProcessor
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fetcher = new HttpFetcher(config, channelIdForTick, (data) => {
+      const prices = data.data.getTokenPrices;
+      return prices[0];
+    });
     return fetcher;
   }
 }

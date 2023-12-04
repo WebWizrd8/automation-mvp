@@ -11,8 +11,15 @@ export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
   pubsubConsumer: PubSubConsumer;
   channelId: string;
   task: CronJob | null;
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dataProcessor?: (data: any) => ResType;
 
-  constructor(axiosConfig: AxiosRequestConfig, channelId: string) {
+  constructor(
+    axiosConfig: AxiosRequestConfig,
+    channelId: string,
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dataProcessor?: (data: any) => ResType,
+  ) {
     super();
     this.axoisConfig = axiosConfig;
     this.eventEmitter = new EventEmitter();
@@ -20,6 +27,7 @@ export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
     this.pubsubConsumer = new PubSubConsumer(pubsubQueue);
     this.channelId = channelId;
     this.task = null;
+    this.dataProcessor = dataProcessor;
   }
 
   async startFetching() {
@@ -54,7 +62,13 @@ export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
     try {
       const response = await axios(this.axoisConfig);
       //console.log("HTTP Fetch Response:", response.data);
-      this.eventEmitter.emit("data", response.data); // Emit the fetched data
+      let data;
+      if (this.dataProcessor) {
+        data = this.dataProcessor(response.data);
+      } else {
+        data = response.data;
+      }
+      this.eventEmitter.emit("data", data); // Emit the fetched data
     } catch (error) {
       console.error("HTTP Fetch Error:", error);
       this.eventEmitter.emit("error", error); // Emit an error event

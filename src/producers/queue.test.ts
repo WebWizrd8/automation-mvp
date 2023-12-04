@@ -14,4 +14,3 @@ describe("Redis PubSub", () => {
     expect(callback).toHaveBeenCalledWith('"test"');
   }, 5000);
 });
-

@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model alert {
+  id       Int    @id @default(autoincrement())
+  user_id  String
+  chain_id Int
+  name     String
+  chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model alert_condition {
+  id       Int                     @id @default(autoincrement())
+  alert_id Int
+  field    Unsupported("jsonpath")
+  operator String
+  value    Json
+}
+
+model chain {
+  id             Int              @id @default(autoincrement())
+  name           String
+  alert          alert[]
+  chain_endpoint chain_endpoint[]
+}
+
+model chain_endpoint {
+  id       Int    @id @default(autoincrement())
+  chain_id Int
+  type     String
+  url      String
+  chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum action_type {
+  discord
+  telegram
+  webhook
+}
+
+model alert_destination {
+  id             Int         @id @default(autoincrement())
+  alert_id       Int
+  destination_id Int
+  destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model destination {
+  id                           Int                            @id @default(autoincrement())
+  user_id                      String
+  type                         action_type
+  discord_destination_payload  discord_destination_payload[]
+  telegram_destination_payload telegram_destination_payload[]
+  alert_destination            alert_destination[]
+}
+
+model discord_destination {
+  id                          String                        @id @db.Uuid
+  discord_user_id             String
+  webhook_url                 String
+  discord_destination_payload discord_destination_payload[]
+}
+
+model discord_destination_payload {
+  destination_id         Int                 @id
+  discord_destination_id String              @db.Uuid
+  template               String
+  destination            destination         @relation(fields: [destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  discord_destination    discord_destination @relation(fields: [discord_destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model telegram_destination {
+  id                           String                         @id @db.Uuid
+  chat_id                      String
+  telegram_user_id             String
+  telegram_destination_payload telegram_destination_payload[]
+}
+
+model telegram_temporary_token {
+  id         String   @id @db.Uuid
+  user_id    String
+  created_at DateTime
+  expires_at DateTime
+}
+
+model telegram_destination_payload {
+  destination_id          Int                  @id
+  telegram_destination_id String               @db.Uuid
+  template                String
+  destination             destination          @relation(fields: [destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  telegram_destination    telegram_destination @relation(fields: [telegram_destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
