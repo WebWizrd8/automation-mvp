@@ -2,7 +2,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function find_matching_alerts(message: string) {
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function find_matching_alerts(message: any) {
   console.log("Calling PostgreSQL function with message:", message);
   try {
     const params = [message];

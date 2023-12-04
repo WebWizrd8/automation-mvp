@@ -20,10 +20,16 @@ const run = () => {
         case "message":
           logger.info("Received message from producer", message.message);
           // Find all alerts that are interested in this message
-          const alerts = await find_matching_alerts(message.message);
-          logger.info("Alerts found", alerts);
-          //TODO: Send alerts to alerting system
-          if (alerts) await handleAlerts(alerts, message.message);
+          try {
+            const messageJson = JSON.parse(message.message);
+            const alerts = await find_matching_alerts(messageJson);
+            logger.info("Alerts found", alerts);
+            //TODO: Send alerts to alerting system
+            if (alerts) await handleAlerts(alerts, message.message);
+          } catch (error) {
+            logger.error("failed to handle message", error);
+            break;
+          }
           break;
         case "shutdown":
           logger.info("Shutting down worker");
