@@ -21,11 +21,11 @@ const run = () => {
           logger.info("Received message from producer", message.message);
           // Find all alerts that are interested in this message
           try {
-            const messageJson = JSON.parse(message.message);
+            const messageJson: Record<string, any> = JSON.parse(message.message);
             const alerts = await find_matching_alerts(messageJson);
             logger.info("Alerts found", alerts);
             //TODO: Send alerts to alerting system
-            if (alerts) await handleAlerts(alerts, message.message);
+            if (alerts) await handleAlerts(alerts, messageJson);
           } catch (error) {
             logger.error("failed to handle message", error);
             break;

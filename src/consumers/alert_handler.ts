@@ -10,13 +10,13 @@ import {
   sendWebhookMessage,
 } from "../notifications/discord/webhook";
 
-export const handleAlerts = async (alertIds: number[], data: string) => {
+export const handleAlerts = async (alertIds: number[], data: Record<string, any>) => {
   for (const alertId of alertIds) {
     await handleAlert(alertId, data);
   }
 };
 
-export const handleAlert = async (alertId: number, data: string) => {
+export const handleAlert = async (alertId: number, data: Record<string, any>) => {
   const destinationRecords = await getDestinationsForAlert(alertId);
   if (!destinationRecords) {
     throw new Error(`Alert with id ${alertId} not found`);

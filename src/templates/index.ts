@@ -1,6 +1,4 @@
-export const replaceTemplateValues = (template: string, data: string) => {
-  const jsonData = JSON.parse(data);
-
+export const replaceTemplateValues = (template: string, jsonData: Record<string, any>) => {
   const keys = Object.keys(jsonData);
 
   for (const key of keys) {
