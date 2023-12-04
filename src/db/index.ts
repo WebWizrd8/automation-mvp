@@ -4,45 +4,10 @@ import { DefinedProviderHttpApi } from "../providers/defined";
 import { TriggerRequest } from "../triggers";
 import { getLogger } from "../utils/logger";
 import * as alert from "./alert";
-
-export interface EndpointRecord {
-  id: number;
-  provider: number;
-  name: string;
-  type: string;
-}
+import * as provider from "./provider";
+import * as endpoint from "./endpoint";
 
 const logger = getLogger("db");
-
-export function getEndpointFromId(id: number): EndpointRecord {
-  if (id === 0) {
-    return {
-      id: 0,
-      provider: 0,
-      name: "newHeads",
-      type: "ws",
-    };
-  } else if (id === 1) {
-    return {
-      id: 1,
-      provider: 1,
-      name: "getTokenPrices",
-      type: "http",
-    };
-  }
-  throw new Error(`Unknown endpoint id: ${id}`);
-}
-
-export function getProviderFromId(id: number): ApiProvider {
-  if (id === 0) {
-    logger.debug("Creating AlchemyProvider");
-    return new AlchemyProviderWsApi();
-  } else if (id === 1) {
-    logger.debug("Creating DefinedProviderHttpApi");
-    return new DefinedProviderHttpApi();
-  }
-  throw new Error(`Unknown provider id: ${id}`);
-}
 
 export function getTriggerRequestFromId(id: number): TriggerRequest {
   if (id === 0) {
@@ -65,4 +30,7 @@ export function getTriggerRequestFromId(id: number): TriggerRequest {
 
 export default {
   ...alert,
+  ...provider,
+  ...endpoint,
+  getTriggerRequestFromId,
 };

@@ -25,10 +25,11 @@ model alert_condition {
 }
 
 model chain {
-  id             Int              @id @default(autoincrement())
-  name           String
-  alert          alert[]
-  chain_endpoint chain_endpoint[]
+  id                      Int                       @id @default(autoincrement())
+  name                    String
+  alert                   alert[]
+  chain_endpoint          chain_endpoint[]
+  provider_chain          provider_chain[]
 }
 
 model chain_endpoint {
@@ -96,4 +97,88 @@ model telegram_destination_payload {
   template                String
   destination             destination          @relation(fields: [destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   telegram_destination    telegram_destination @relation(fields: [telegram_destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model provider {
+  id             Int              @id @default(autoincrement())
+  name           String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  description    String?
+  http_token       String
+  ws_token         String
+  provider_chain provider_chain[]
+  endpoint       endpoint[]
+}
+
+model provider_chain {
+  provider_id    Int
+  chain_id       Int
+  provider_chain String
+  provider       provider @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain          chain    @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([provider_id, chain_id])
+}
+
+enum connection_type {
+  http
+  ws
+}
+
+model endpoint {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  description     String?
+  connection_kind connection_type
+  provider_id     Int
+  provider        provider        @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model event_tag {
+  id                      Int                       @id @default(autoincrement())
+  name                    String                    @unique
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  description             String?
+}
+
+model event_tag_chain {
+  tag_id      Int
+  chain_id    Int
+  endpoint_id Int
+  tag         event_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain       chain             @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([tag_id, chain_id])
+}
+
+model event_fetch_request {
+  id        Int               @id @default(autoincrement())
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  tag_id    Int
+  chain_id  Int
+  tag       event_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain     chain             @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payload   Json
+  added_by  String
+}
+
+model token_prices {
+  token_address String
+  chain_id      Int
+  priceUsd      Float
+  timestamp     DateTime
+  blockNumber   Int
+}
+
+model request_trigger_function {
+  event_fetch_request_id Int
+  function_name   String
+  function_args Json
+  event_fetch_request   event_fetch_request @relation(fields: [event_fetch_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  added_by        String
 }

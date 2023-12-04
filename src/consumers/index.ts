@@ -17,11 +17,11 @@ export class DataConsumerWorkerManager {
     this.pubSubQueue = pubSubQueue;
   }
 
-  async create(id: string, triggerId: string): Promise<string> {
-    logger.info(`Creating consumer worker for trigger ${triggerId}`);
+  async create(id: string, triggerRequestId: string): Promise<string> {
+    logger.info(`Creating consumer worker for trigger ${triggerRequestId}`);
     const worker = new Worker("./dist/consumers/consumer_worker.js", {
       workerData: {
-        triggerId,
+        triggerId: triggerRequestId,
       },
     });
     await this.pubSubQueue.subscribe(id, (message) => {
@@ -34,10 +34,10 @@ export class DataConsumerWorkerManager {
     const workerDetails: WorkerDetails = {
       worker,
       status: "created",
-      triggerId,
+      triggerId: triggerRequestId,
     };
     this.workers.set(id, workerDetails);
-    logger.info(`Created consumer worker for trigger ${triggerId}`);
+    logger.info(`Created consumer worker for trigger ${triggerRequestId}`);
     this.start(id);
     return id;
   }

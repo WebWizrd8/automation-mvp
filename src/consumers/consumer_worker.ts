@@ -5,11 +5,13 @@ import { find_matching_alerts } from "../db/functions";
 import { getLogger } from "../utils/logger";
 import { handleAlerts } from "./alert_handler";
 
-const { triggerId }: { triggerId: string } = workerData;
+const { triggerRequestId }: { triggerRequestId: string } = workerData;
+
+const triggerRequest = getTriggerRequestFromId(triggerRequestId);
 
 const logger = getLogger("consumer_worker");
 
-logger.info(`Consumer worker received id: ${triggerId}`);
+logger.info(`Consumer worker received id: ${triggerRequestId}`);
 
 const run = () => {
   if (parentPort) {
