@@ -25,11 +25,13 @@ model alert_condition {
 }
 
 model chain {
-  id                      Int                       @id @default(autoincrement())
-  name                    String
-  alert                   alert[]
-  chain_endpoint          chain_endpoint[]
-  provider_chain          provider_chain[]
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  alert               alert[]
+  chain_endpoint      chain_endpoint[]
+  provider_chain      provider_chain[]
+  event_tag_chain     event_tag_chain[]
+  event_fetch_request event_fetch_request[]
 }
 
 model chain_endpoint {
@@ -105,8 +107,8 @@ model provider {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   description    String?
-  http_token       String
-  ws_token         String
+  http_token     String
+  ws_token       String
   provider_chain provider_chain[]
   endpoint       endpoint[]
 }
@@ -138,11 +140,13 @@ model endpoint {
 }
 
 model event_tag {
-  id                      Int                       @id @default(autoincrement())
-  name                    String                    @unique
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  description             String?
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  description         String?
+  event_tag_chain     event_tag_chain[]
+  event_fetch_request event_fetch_request[]
 }
 
 model event_tag_chain {
@@ -150,21 +154,22 @@ model event_tag_chain {
   chain_id    Int
   endpoint_id Int
   tag         event_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  chain       chain             @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain       chain     @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([tag_id, chain_id])
 }
 
 model event_fetch_request {
-  id        Int               @id @default(autoincrement())
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  tag_id    Int
-  chain_id  Int
-  tag       event_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  chain     chain             @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  payload   Json
-  added_by  String
+  id                                   Int                                    @id @default(autoincrement())
+  createdAt                            DateTime                               @default(now())
+  updatedAt                            DateTime                               @updatedAt
+  tag_id                               Int
+  chain_id                             Int
+  tag                                  event_tag                              @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain                                chain                                  @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payload                              Json
+  added_by                             String
+  event_fetch_request_trigger_function event_fetch_request_trigger_function[]
 }
 
 model token_prices {
@@ -172,13 +177,15 @@ model token_prices {
   chain_id      Int
   priceUsd      Float
   timestamp     DateTime
-  blockNumber   Int
+
+  @@id([token_address, chain_id, timestamp])
 }
 
-model request_trigger_function {
+model event_fetch_request_trigger_function {
+  id                     Int                 @id @default(autoincrement())
   event_fetch_request_id Int
-  function_name   String
-  function_args Json
-  event_fetch_request   event_fetch_request @relation(fields: [event_fetch_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  added_by        String
+  function_name          String              @unique
+  function_args          Json
+  event_fetch_request    event_fetch_request @relation(fields: [event_fetch_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  added_by               String
 }

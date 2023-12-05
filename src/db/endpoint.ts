@@ -3,20 +3,6 @@ export enum ConnectionType {
   WS = "ws",
 }
 
-/*
-
-model endpoint {
-  id              Int             @id @default(autoincrement())
-  name            String          @unique
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  description     String?
-  connection_kind connection_type
-  provider_id     Int
-  provider        provider        @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-}
-*/
-
 export class EndpointRecord {
   id: number;
   name: string;

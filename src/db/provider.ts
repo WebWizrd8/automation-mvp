@@ -1,17 +1,3 @@
-/*
-model provider {
-  id             Int              @id @default(autoincrement())
-  name           String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  description    String?
-  http_url       String
-  ws_url         String
-  provider_chain provider_chain[]
-  endpoint       endpoint[]
-}
-*/
-
 import ApiProvider from "../providers";
 import { AlchemyProviderWsApi } from "../providers/alchemy";
 import { DefinedProviderHttpApi } from "../providers/defined";

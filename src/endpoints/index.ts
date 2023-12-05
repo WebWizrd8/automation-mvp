@@ -11,6 +11,10 @@ export class Endpoint {
     this.provider = getProviderFromId(this.record.provider_id);
   }
 
+  getId() {
+    return this.record.id;
+  }
+
   getFetcher() {}
 
   getName() {

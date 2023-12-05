@@ -1,3 +1,5 @@
+import { EndpointRecord, getEndpointRecordFromId } from "./endpoint";
+
 export class EventTagRecord {
   id: number;
   name: string;
@@ -114,4 +116,70 @@ export function getEventFetchRequestRecordFromId(
   }
 
   return eventFetchRequestRecord;
+}
+
+//TODO: This should come from `db.event_tag_chain`.
+export function getEndpointRecordFromFetchRequestId(
+  eventFetchRequestId: number,
+  chainId: number,
+): EndpointRecord {
+  let endpointId: number;
+  if (eventFetchRequestId == 0) {
+    if (chainId == 1) {
+      endpointId = 0;
+    }
+  } else if (eventFetchRequestId == 1) {
+    if (chainId == 1) {
+      endpointId = 1;
+    }
+  } else {
+    throw new Error(`Unknown event fetch request id: ${eventFetchRequestId}`);
+  }
+  const endpointRecord = getEndpointRecordFromId(endpointId!);
+  return endpointRecord;
+}
+
+export class EventFetchRequestTriggerFunctionRecord {
+  id: number;
+  event_fetch_request_id: number;
+  function_name: string;
+  function_args: string;
+  added_by: string;
+
+  constructor(
+    id: number,
+    event_fetch_request_id: number,
+    function_name: string,
+    function_args: string,
+    added_by: string,
+  ) {
+    this.id = id;
+    this.event_fetch_request_id = event_fetch_request_id;
+    this.function_name = function_name;
+    this.function_args = function_args;
+    this.added_by = added_by;
+  }
+}
+
+//TODO: This values should come from `db.event_fetch_request_trigger_function`.
+export function getEventFetchRequestTriggerFunctionRecordFromId(
+  id: number,
+): EventFetchRequestTriggerFunctionRecord {
+  let eventFetchRequestTriggerFunctionRecord: EventFetchRequestTriggerFunctionRecord;
+  if (id === 0) {
+    const functionArgs = {
+      priceUsd: 2200.0,
+    };
+    eventFetchRequestTriggerFunctionRecord =
+      new EventFetchRequestTriggerFunctionRecord(
+        0,
+        1,
+        "SPOT_PRICE_MATCH",
+        JSON.stringify(functionArgs),
+        "test_user",
+      );
+  } else {
+    throw new Error(`Unknown event fetch request trigger function id: ${id}`);
+  }
+  return eventFetchRequestTriggerFunctionRecord;
 }

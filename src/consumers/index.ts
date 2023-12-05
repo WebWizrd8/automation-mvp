@@ -5,7 +5,7 @@ import { getLogger } from "../utils/logger";
 interface WorkerDetails {
   worker: Worker;
   status: "created" | "running" | "stopped";
-  triggerId: string;
+  eventFetchRequestId: string;
 }
 
 const logger = getLogger("DataConsumerWorkerManager");
@@ -17,11 +17,11 @@ export class DataConsumerWorkerManager {
     this.pubSubQueue = pubSubQueue;
   }
 
-  async create(id: string, triggerRequestId: string): Promise<string> {
-    logger.info(`Creating consumer worker for trigger ${triggerRequestId}`);
+  async create(id: string, eventFetchRequestId: string): Promise<string> {
+    logger.info(`Creating consumer worker for trigger ${eventFetchRequestId}`);
     const worker = new Worker("./dist/consumers/consumer_worker.js", {
       workerData: {
-        triggerId: triggerRequestId,
+        eventFetchRequestId,
       },
     });
     await this.pubSubQueue.subscribe(id, (message) => {
@@ -34,10 +34,10 @@ export class DataConsumerWorkerManager {
     const workerDetails: WorkerDetails = {
       worker,
       status: "created",
-      triggerId: triggerRequestId,
+      eventFetchRequestId,
     };
     this.workers.set(id, workerDetails);
-    logger.info(`Created consumer worker for trigger ${triggerRequestId}`);
+    logger.info(`Created consumer worker for trigger ${eventFetchRequestId}`);
     this.start(id);
     return id;
   }

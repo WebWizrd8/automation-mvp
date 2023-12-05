@@ -5,9 +5,10 @@ import { BufferLike } from "../fetchers/types";
 import { getLogger } from "../utils/logger";
 import { getNewBlocksChannel } from "../producers/types";
 import { Endpoint } from "../endpoints";
-import { ConnectionType, getEndpointRecordFromId } from "../db/endpoint";
+import { ConnectionType, EndpointRecord } from "../db/endpoint";
 import {
   EventFetchRequestRecord,
+  getEndpointRecordFromFetchRequestId,
   getEventFetchRequestRecordFromId,
 } from "../db/event";
 
@@ -15,9 +16,14 @@ const logger = getLogger("EventFetchRequest");
 
 export class EventFetchRequest {
   record: EventFetchRequestRecord;
+  endpointRecord: EndpointRecord;
 
   constructor(id: number) {
     this.record = getEventFetchRequestRecordFromId(id);
+    this.endpointRecord = getEndpointRecordFromFetchRequestId(
+      this.record.id,
+      this.record.chain_id,
+    );
   }
 
   getEventTagId(): number {
@@ -29,10 +35,7 @@ export class EventFetchRequest {
   }
 
   getEndpointId(): number {
-    const chainId = this.getChainId();
-    const tagId = this.getEventTagId();
-    const endpointRecord = getEndpointRecordFromId(this.record.endpoint_id);
-    return this.record.endpoint_id;
+    return this.endpointRecord.id;
   }
 
   getFethcher(): DataFetcher<BufferLike> {
@@ -40,12 +43,15 @@ export class EventFetchRequest {
   }
 
   getInput(): ApiHttpInput | ApiWsInput {
-    const endpointRecord = getEndpointRecordFromId(this.endpointId);
+    const endpointRecord = this.endpointRecord;
     if (endpointRecord.connection_kind === ConnectionType.WS) {
-      return { input: this.input };
+      return { input: this.record.payload };
     } else {
-      const newBlockChannelId = getNewBlocksChannel(this.chainId);
-      return { input: this.input, channelIdForTick: newBlockChannelId };
+      const newBlockChannelId = getNewBlocksChannel(this.record.chain_id);
+      return {
+        input: this.record.payload,
+        channelIdForTick: newBlockChannelId,
+      };
     }
   }
 }
@@ -56,7 +62,7 @@ function fetcherFromEventFetchRequest(
   const chainId = req.getChainId();
   const endpointId = req.getEndpointId();
   const endpoint = new Endpoint(endpointId);
-  logger.debug(`Fetching data for ${endpoint.getName()}`);
+  logger.debug(`Getting fetcher for ${endpoint.getName()}`);
   return endpoint.provider.getConnectionConfig(
     endpoint.getName(),
     chainId,
