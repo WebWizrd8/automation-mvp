@@ -42,6 +42,7 @@ export default class WebSocketFetcher<T> extends PubSubDataFetcher<T> {
       console.warn("WebSocket is already connected");
       return;
     }
+    console.log("Connecting to websocket with url", this.url);
     this.ws = new WebSocket(this.url);
     await waitForOpenSocket(this.ws!);
     // if (this.onConnectCallback) {

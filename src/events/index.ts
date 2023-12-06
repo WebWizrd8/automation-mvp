@@ -18,12 +18,17 @@ export class EventFetchRequest {
   record: EventFetchRequestRecord;
   endpointRecord: EndpointRecord;
 
-  constructor(id: number) {
-    this.record = getEventFetchRequestRecordFromId(id);
+  constructor(record: EventFetchRequestRecord) {
+    this.record = record;
     this.endpointRecord = getEndpointRecordFromFetchRequestId(
       this.record.id,
       this.record.chain_id,
     );
+  }
+
+  static fromId(id: number): EventFetchRequest {
+    const record = getEventFetchRequestRecordFromId(id);
+    return new EventFetchRequest(record);
   }
 
   getEventTagId(): number {

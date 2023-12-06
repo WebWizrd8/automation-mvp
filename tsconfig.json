@@ -14,6 +14,7 @@
   ],
   "include": [
     "src/**/*.ts",
+    "helpers",
     "jest.setup.cjs"
   ],
   "watchOptions": {

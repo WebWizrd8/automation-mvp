@@ -1,32 +1,22 @@
-//Disable no-case-declarations lint
-/* eslint-disable no-case-declarations */
-import { parentPort, workerData } from "worker_threads";
-import { find_matching_alerts } from "../db/functions";
-import { getLogger } from "../utils/logger";
-import { handleAlerts } from "./alert_handler";
+import { find_matching_alerts } from "../../db/functions";
+import { handleAlerts } from "../alert_handler";
 import {
-  EventTagRecord,
+  EventFetchRequestRecord,
   getEventFetchRequestRecordFromId,
-  getEventFetchRequestTriggerFunctionRecordFromId,
   getEventTagRecordFromId,
-} from "../db/event";
+} from "../../db/event";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
-
-export interface ConsumerWorkerData {
-  eventFetchRequestId: number;
-}
+import { getLogger } from "../../utils/logger";
 
 const dbClient = new PrismaClient();
 
-const logger = getLogger("consumer_worker");
+const logger = getLogger("consumer/woker/event_handler");
 
-async function handleOnMessage(
-  eventFetchRequestId: number,
+export async function handleOnMessage(
+  eventFetchRequestRecord: EventFetchRequestRecord,
   message: Record<string, unknown>,
 ) {
-  const eventFetchRequestRecord =
-    getEventFetchRequestRecordFromId(eventFetchRequestId);
   const eventTagRecord = getEventTagRecordFromId(
     eventFetchRequestRecord.tag_id,
   );
@@ -46,7 +36,7 @@ async function handleOnMessage(
       const eventFetchRequestFunctionRecords =
         await dbClient.event_fetch_request_trigger_function.findMany({
           where: {
-            event_fetch_request_id: eventFetchRequestId,
+            event_fetch_request_id: eventFetchRequestRecord.id,
           },
         });
 
@@ -147,39 +137,3 @@ async function handleOnMessage(
     }
   }
 }
-
-const run = () => {
-  const { eventFetchRequestId }: ConsumerWorkerData = workerData;
-  logger.info(`Consumer worker started for id: ${eventFetchRequestId}`);
-  if (parentPort) {
-    parentPort.on("message", async (message) => {
-      switch (message.type) {
-        case "start":
-          break;
-        case "message":
-          logger.info("Received message from producer", message.message);
-
-          // Find all alerts that are interested in this message
-          try {
-            const messageParsed: Record<string, unknown> = JSON.parse(
-              message.message,
-            );
-
-            await handleOnMessage(eventFetchRequestId, messageParsed);
-          } catch (error) {
-            logger.error("failed to handle message", error);
-            break;
-          }
-          break;
-        case "shutdown":
-          logger.info("Shutting down worker");
-          // Clean up and close the worker
-          process.exit(0);
-      }
-    });
-  } else {
-    console.error("This worker must be run as a thread from worker_threads");
-  }
-};
-
-run();

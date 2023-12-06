@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { EVMChains, EVMChainId } from "../../chains/types";
 import HttpFetcher from "../../fetchers/http-fetcher";
 import DataFetcher from "../../fetchers/data-fetcher";
@@ -44,7 +43,6 @@ export class DefinedProviderHttpApi extends ApiProvider {
   record: ProviderRecord;
   constructor(record: ProviderRecord) {
     super(record);
-    dotenv.config();
     this.record = record;
   }
 
@@ -68,7 +66,7 @@ export class DefinedProviderHttpApi extends ApiProvider {
       url: this.getUrl(chainId),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `${process.env.DEFINED_API}`,
+        Authorization: `${this.record.http_token}`,
       },
     };
 
@@ -114,7 +112,7 @@ export class DefinedProviderHttpApi extends ApiProvider {
     }
 
     const config = {
-      axiosConfig,
+      ...axiosConfig,
       method: "post",
       data: JSON.stringify({ query }),
     };

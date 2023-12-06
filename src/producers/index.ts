@@ -1,12 +1,13 @@
 import { Worker } from "worker_threads";
 import { PubSubPublisher } from "./queue";
-import { TriggerRequest } from "../triggers";
 import { getLogger } from "../utils/logger";
+import { EventFetchRequestRecord } from "../db/event";
+import { ProducerWorkerData } from "./producer_worker";
 
 export interface WorkerDetails {
   worker: Worker;
   status: string;
-  triggerRequest: TriggerRequest;
+  eventFetchRequest: EventFetchRequestRecord;
 }
 
 const logger = getLogger("DataProducerWorkerManager");
@@ -18,11 +19,11 @@ export class DataProducerWorkerManager {
     this.pubSubQueue = pubSubQueue;
   }
 
-  create(id: string, triggerRequest: TriggerRequest): string {
+  create(id: string, eventFetchRequest: EventFetchRequestRecord): string {
     const worker = new Worker("./dist/producers/producer_worker.js", {
       workerData: {
-        triggerRequest,
-      },
+        eventFetchRequest,
+      } as ProducerWorkerData,
     });
     worker.on("message", async (message) => {
       logger.info(`Message from worker ${id}`, message);
@@ -34,7 +35,7 @@ export class DataProducerWorkerManager {
     const workerDetails: WorkerDetails = {
       worker,
       status: "created",
-      triggerRequest,
+      eventFetchRequest: eventFetchRequest,
     };
     this.workers.set(id, workerDetails);
     return id;
