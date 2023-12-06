@@ -1,11 +1,12 @@
 import { Worker } from "worker_threads";
 import { PubSubConsumer } from "../producers/queue";
 import { getLogger } from "../utils/logger";
+import { ConsumerWorkerData } from "./consumer_worker";
 
 interface WorkerDetails {
   worker: Worker;
   status: "created" | "running" | "stopped";
-  eventFetchRequestId: string;
+  eventFetchRequestId: number;
 }
 
 const logger = getLogger("DataConsumerWorkerManager");
@@ -17,12 +18,12 @@ export class DataConsumerWorkerManager {
     this.pubSubQueue = pubSubQueue;
   }
 
-  async create(id: string, eventFetchRequestId: string): Promise<string> {
+  async create(id: string, eventFetchRequestId: number): Promise<string> {
     logger.info(`Creating consumer worker for trigger ${eventFetchRequestId}`);
     const worker = new Worker("./dist/consumers/consumer_worker.js", {
       workerData: {
         eventFetchRequestId,
-      },
+      } as ConsumerWorkerData,
     });
     await this.pubSubQueue.subscribe(id, (message) => {
       logger.debug(`Sending message to consumer worker ${id}`, message);
