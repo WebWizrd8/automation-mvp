@@ -178,8 +178,38 @@ export function getEventFetchRequestTriggerFunctionRecordFromId(
         JSON.stringify(functionArgs),
         "test_user",
       );
+  } else if (id === 1) {
+    const functionArgs = {
+      duration: "30D",
+      change_percent: 10,
+      direction: "UP",
+    };
+    eventFetchRequestTriggerFunctionRecord =
+      new EventFetchRequestTriggerFunctionRecord(
+        1,
+        1,
+        "SPOT_PRICE_CHANGE",
+        JSON.stringify(functionArgs),
+        "test_user",
+      );
   } else {
     throw new Error(`Unknown event fetch request trigger function id: ${id}`);
   }
   return eventFetchRequestTriggerFunctionRecord;
+}
+
+export async function getEventFetchRequestFunctionFromFetchReqeustId(
+  _eventFetchRequestRecordId: number,
+) {
+  // await dbClient.event_fetch_request_trigger_function.findMany({
+  //   where: {
+  //     event_fetch_request_id: eventFetchRequestRecordId,
+  //   },
+  // });
+
+  const t = await Promise.resolve([
+    getEventFetchRequestTriggerFunctionRecordFromId(0),
+    getEventFetchRequestTriggerFunctionRecordFromId(1),
+  ]);
+  return t;
 }

@@ -13,16 +13,17 @@ import {
 export const handleAlerts = async (
   alertIds: number[],
   data: Record<string, unknown>,
-  _filter: Record<string, unknown>,
+  filter: Record<string, unknown>,
 ) => {
   for (const alertId of alertIds) {
-    await handleAlert(alertId, data);
+    await handleAlert(alertId, data, filter);
   }
 };
 
 export const handleAlert = async (
   alertId: number,
   data: Record<string, unknown>,
+  filter: Record<string, unknown>,
 ) => {
   const destinationRecords = await getDestinationsForAlert(alertId);
   if (!destinationRecords) {
@@ -36,7 +37,7 @@ export const handleAlert = async (
           destination.id,
         );
         const { template, telegram_destination } = telegramPayload;
-        const preparedResponse = replaceTemplateValues(template, data);
+        const preparedResponse = replaceTemplateValues(template, data, filter);
         await bot.telegram.sendMessage(
           telegram_destination.chat_id,
           preparedResponse,
@@ -48,7 +49,7 @@ export const handleAlert = async (
           destination.id,
         );
         const { template, discord_destination } = discordPayload;
-        const preparedResponse = replaceTemplateValues(template, data);
+        const preparedResponse = replaceTemplateValues(template, data, filter);
         const webhook = getWebhook(discord_destination.webhook_url);
         await sendWebhookMessage(webhook, preparedResponse);
         break;

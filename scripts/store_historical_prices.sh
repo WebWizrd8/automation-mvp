@@ -29,34 +29,8 @@ RESP=$(curl --request POST \
   --data "$DATA")
 
 PRICES=$(echo $RESP | jq -r '.data.getBars.o[]')
-# 1632.00542461 1622.57187176 1623.49357247 1623.57007704
 TIMESTAMPS=$(echo $RESP | jq -r '.data.getBars.t[]')
-# 1694008800 1694012400 1694016000 1694019600
 
-
-# echo "Prices: $PRICES"
-# echo "Timestamps: $TIMESTAMPS"
-
-# Insert data into the database 
-# model token_prices {
-#   token_address String
-#   chain_id      Int
-#   priceUsd      Float
-#   timestamp     DateTime
-#
-#   @@id([token_address, chain_id, timestamp])
-# }
-
-# convert above prisma model to postgresql table
-# CREATE TABLE token_prices (
-#   token_address VARCHAR(42) NOT NULL,
-#   chain_id      INT NOT NULL,
-#   priceUsd      FLOAT NOT NULL,
-#   timestamp     TIMESTAMP NOT NULL,
-#   PRIMARY KEY (token_address, chain_id, timestamp)
-# );
-
-# write shell script to insert data into the database
 QUERY='INSERT INTO token_prices ("token_address", "chain_id", "priceUsd", "timestamp") VALUES '
 COUNT=0
 for i in $(seq 1 $(echo $PRICES | wc -w)); do

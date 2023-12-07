@@ -2,14 +2,15 @@ import { find_matching_alerts } from "../../db/functions";
 import { handleAlerts } from "../alert_handler";
 import {
   EventFetchRequestRecord,
+  getEventFetchRequestFunctionFromFetchReqeustId,
   getEventFetchRequestRecordFromId,
   getEventTagRecordFromId,
 } from "../../db/event";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { getLogger } from "../../utils/logger";
 
-const dbClient = new PrismaClient();
+const dbClient = new PrismaClient({ log: ["query"] });
 
 const logger = getLogger("consumer/woker/event_handler");
 
@@ -23,24 +24,16 @@ export async function handleOnMessage(
 
   if (eventTagRecord.name === "GET_SPOT_PRICE") {
     try {
-      await dbClient.token_prices.create({
-        data: {
-          chain_id: eventFetchRequestRecord.chain_id,
-          token_address: message.address as string,
-          priceUsd: message.priceUsd as number,
-          timestamp: new Date(message.timestamp as string),
-        },
-      });
-
+      const sqlQuery = `INSERT INTO token_prices ("chain_id", "token_address", "priceUsd", "timestamp") VALUES (${eventFetchRequestRecord.chain_id}, '${message.address}', ${message.priceUsd}, to_timestamp(${message.timestamp})) ON CONFLICT DO NOTHING`;
+      logger.info("sqlQuery", sqlQuery);
+      const result = await dbClient.$executeRawUnsafe(sqlQuery);
       //Get all event_fetch_request_trigger_function records for this event_fetch_request
       const eventFetchRequestFunctionRecords =
-        await dbClient.event_fetch_request_trigger_function.findMany({
-          where: {
-            event_fetch_request_id: eventFetchRequestRecord.id,
-          },
-        });
-
+        await getEventFetchRequestFunctionFromFetchReqeustId(
+          eventFetchRequestRecord.id,
+        );
       for (const eventFetchRequestFunctionRecord of eventFetchRequestFunctionRecords) {
+        logger.info("EFRFR", eventFetchRequestFunctionRecord);
         if (
           eventFetchRequestFunctionRecord.function_name === "SPOT_PRICE_MATCH"
         ) {
@@ -105,7 +98,8 @@ export async function handleOnMessage(
             const firstPrice = prices[0];
             const lastPrice = prices[prices.length - 1];
             const priceChangeUsd = lastPrice.priceUsd - firstPrice.priceUsd;
-            const priceChangePercentage = priceChangeUsd / firstPrice.priceUsd;
+            const priceChangePercentage =
+              (priceChangeUsd * 100) / firstPrice.priceUsd;
 
             logger.info(
               `price change for  ${message.address} in ${key}`,
