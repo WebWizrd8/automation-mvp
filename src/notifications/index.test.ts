@@ -45,9 +45,9 @@ describe("Producers Test", () => {
     manager.start(id);
     manager.start(getMainnetTokenPricesId);
     //Timeout to wait for two blocks to be mined
-    await new Promise((resolve) => setTimeout(resolve, 25000));
+    await new Promise((resolve) => setTimeout(resolve, 14000));
     manager.stop(id);
     manager.stop(getMainnetTokenPricesId);
     consumer_manager.stop(consumer_worker_id);
-  }, 25500);
+  }, 14500);
 });
