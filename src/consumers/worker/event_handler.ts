@@ -1,9 +1,8 @@
 import { find_matching_actions } from "../../db/functions";
-import { handleAlerts } from "../alert_handler";
+import { handleActions } from "../alert_handler";
 import {
   EventFetchRequestRecord,
-  getEventFetchRequestFunctionFromFetchReqeustId,
-  getEventFetchRequestRecordFromId,
+  getEventFetchRequestFunctionFromFetchRequestId,
   getEventTagRecordFromId,
 } from "../../db/event";
 import { Prisma, PrismaClient } from "@prisma/client";
@@ -13,6 +12,14 @@ import { getLogger } from "../../utils/logger";
 const dbClient = new PrismaClient({ log: ["query"] });
 
 const logger = getLogger("consumer/woker/event_handler");
+
+async function saveTokenPrice(
+  eventFetchRequestRecord: EventFetchRequestRecord,
+  message: Record<string, unknown>,
+) {
+  const sqlQuery = Prisma.sql`INSERT INTO token_prices ("chain_id", "token_address", "priceUsd", "timestamp") VALUES (${eventFetchRequestRecord.chain_id}, '${message.address}', ${message.priceUsd}, to_timestamp(${message.timestamp})) ON CONFLICT DO NOTHING`;
+  await dbClient.$executeRaw(sqlQuery);
+}
 
 export async function handleOnMessage(
   eventFetchRequestRecord: EventFetchRequestRecord,
@@ -24,12 +31,10 @@ export async function handleOnMessage(
 
   if (eventTagRecord.name === "GET_SPOT_PRICE") {
     try {
-      const sqlQuery = `INSERT INTO token_prices ("chain_id", "token_address", "priceUsd", "timestamp") VALUES (${eventFetchRequestRecord.chain_id}, '${message.address}', ${message.priceUsd}, to_timestamp(${message.timestamp})) ON CONFLICT DO NOTHING`;
-      logger.info("sqlQuery", sqlQuery);
-      const result = await dbClient.$executeRawUnsafe(sqlQuery);
+      await saveTokenPrice(eventFetchRequestRecord, message);
       //Get all event_fetch_request_trigger_function records for this event_fetch_request
       const eventFetchRequestFunctionRecords =
-        await getEventFetchRequestFunctionFromFetchReqeustId(
+        await getEventFetchRequestFunctionFromFetchRequestId(
           eventFetchRequestRecord.id,
         );
       for (const eventFetchRequestFunctionRecord of eventFetchRequestFunctionRecords) {
@@ -40,7 +45,7 @@ export async function handleOnMessage(
           const filter = message;
           const alerts = await find_matching_actions(filter);
           logger.info("Alerts found", alerts);
-          if (alerts) await handleAlerts(alerts, message, filter);
+          if (alerts) await handleActions(alerts, message, filter);
         } else if (
           eventFetchRequestFunctionRecord.function_name === "SPOT_PRICE_CHANGE"
         ) {
@@ -61,6 +66,8 @@ export async function handleOnMessage(
           tokenPrices.sort(
             (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
           );
+          logger.info(`tokenPrices Length ${tokenPrices.length}`);
+          logger.info("tokenPrices", tokenPrices[tokenPrices.length - 1]);
 
           //From the token_prices, get prices at 1d, 7d, 30d, 60d, 90d
           const oneDayAgo = new Date();
@@ -94,7 +101,7 @@ export async function handleOnMessage(
             "60D": sixtyDayPrices,
             "90D": ninetyDayPrices,
           };
-          const filters = _.map(priceMaps, (prices, key) => {
+          const filters = Object.entries(priceMaps).map(([key, prices]) => {
             const firstPrice = prices[0];
             const lastPrice = prices[prices.length - 1];
             const priceChangeUsd = lastPrice.priceUsd - firstPrice.priceUsd;
@@ -122,7 +129,7 @@ export async function handleOnMessage(
           for (const filter of filters) {
             const alerts = await find_matching_actions(filter);
             logger.info("Alerts found", alerts);
-            if (alerts) await handleAlerts(alerts, message, filter);
+            if (alerts) await handleActions(alerts, message, filter);
           }
         }
       }

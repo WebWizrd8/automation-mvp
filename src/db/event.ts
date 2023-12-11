@@ -198,7 +198,7 @@ export function getEventFetchRequestTriggerFunctionRecordFromId(
   return eventFetchRequestTriggerFunctionRecord;
 }
 
-export async function getEventFetchRequestFunctionFromFetchReqeustId(
+export async function getEventFetchRequestFunctionFromFetchRequestId(
   _eventFetchRequestRecordId: number,
 ) {
   // await dbClient.event_fetch_request_trigger_function.findMany({
