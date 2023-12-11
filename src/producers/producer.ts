@@ -1,4 +1,3 @@
-import { EventFetchRequestRecord } from "../db/event";
 import { EventFetchRequest } from "../events";
 import DataFetcher from "../fetchers/data-fetcher";
 import { BufferLike } from "../fetchers/types";
@@ -10,8 +9,8 @@ export default class DataProducer {
   private eventFetchRequest: EventFetchRequest;
   private dataFetcher?: DataFetcher<BufferLike>;
 
-  constructor(eventFetchRequestRecord: EventFetchRequestRecord) {
-    this.eventFetchRequest = new EventFetchRequest(eventFetchRequestRecord);
+  constructor(eventFetchRequest: EventFetchRequest) {
+    this.eventFetchRequest = eventFetchRequest;
   }
 
   async start(
@@ -19,7 +18,7 @@ export default class DataProducer {
     onError: (error: BufferLike) => void,
   ) {
     console.log("Starting fetcher...");
-    const fetcher = this.eventFetchRequest.getFethcher();
+    const fetcher = await this.eventFetchRequest.getFethcher();
     fetcher.onData((data) => {
       onData(data);
     });

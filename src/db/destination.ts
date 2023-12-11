@@ -1,12 +1,10 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import dbClient from "../utils/db-client";
 
 export const getDestinationPayloadForTelegram = async (
   destinationId: number,
 ) => {
   const destionationPayload =
-    await prisma.telegram_destination_payload.findMany({
+    await dbClient.telegram_destination_payload.findMany({
       where: {
         destination_id: destinationId,
       },
@@ -23,16 +21,15 @@ export const getDestinationPayloadForTelegram = async (
 export const getDestinationPayloadForDiscord = async (
   destinationId: number,
 ) => {
-  const destionationPayload = await prisma.discord_destination_payload.findMany(
-    {
+  const destionationPayload =
+    await dbClient.discord_destination_payload.findMany({
       where: {
         destination_id: destinationId,
       },
       include: {
         discord_destination: true,
       },
-    },
-  );
+    });
   if (!destionationPayload.length) {
     throw new Error(`Discord destination with id ${destinationId} not found`);
   }

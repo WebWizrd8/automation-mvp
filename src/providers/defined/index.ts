@@ -71,6 +71,9 @@ export class DefinedProviderHttpApi extends ApiProvider {
     };
 
     const { input, channelIdForTick } = apiInputData;
+    if (input === null) {
+      throw new Error(`Input is null for DefinedProviderHttpApi`);
+    }
     if (name === "getTokenPrices") {
       return this.getTokenPrice(
         axiosConfig,

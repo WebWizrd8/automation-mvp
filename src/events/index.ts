@@ -12,23 +12,30 @@ import {
   getEventFetchRequestRecordFromId,
 } from "../db/event";
 
-const logger = getLogger("EventFetchRequest");
+const logger = getLogger("events/index.ts");
 
 export class EventFetchRequest {
   record: EventFetchRequestRecord;
   endpointRecord: EndpointRecord;
 
-  constructor(record: EventFetchRequestRecord) {
+  constructor(record: EventFetchRequestRecord, endpointRecord: EndpointRecord) {
     this.record = record;
-    this.endpointRecord = getEndpointRecordFromFetchRequestId(
-      this.record.id,
-      this.record.chain_id,
-    );
+    this.endpointRecord = endpointRecord;
   }
 
-  static fromId(id: number): EventFetchRequest {
-    const record = getEventFetchRequestRecordFromId(id);
-    return new EventFetchRequest(record);
+  static async fromRecord(
+    record: EventFetchRequestRecord,
+  ): Promise<EventFetchRequest> {
+    const endpointRecord = await getEndpointRecordFromFetchRequestId(
+      record.id,
+      record.chain_id,
+    );
+    return new EventFetchRequest(record, endpointRecord);
+  }
+
+  static async fromId(id: number): Promise<EventFetchRequest> {
+    const record = await getEventFetchRequestRecordFromId(id);
+    return EventFetchRequest.fromRecord(record);
   }
 
   getEventTagId(): number {
@@ -43,8 +50,8 @@ export class EventFetchRequest {
     return this.endpointRecord.id;
   }
 
-  getFethcher(): DataFetcher<BufferLike> {
-    return fetcherFromEventFetchRequest(this);
+  async getFethcher(): Promise<DataFetcher<BufferLike>> {
+    return await fetcherFromEventFetchRequest(this);
   }
 
   getInput(): ApiHttpInput | ApiWsInput {
@@ -61,13 +68,18 @@ export class EventFetchRequest {
   }
 }
 
-function fetcherFromEventFetchRequest(
+async function fetcherFromEventFetchRequest(
   req: EventFetchRequest,
-): DataFetcher<BufferLike> {
+): Promise<DataFetcher<BufferLike>> {
   const chainId = req.getChainId();
   const endpointId = req.getEndpointId();
-  const endpoint = new Endpoint(endpointId);
+  const endpoint = await Endpoint.fromId(endpointId);
   logger.debug(`Getting fetcher for ${endpoint.getName()}`);
+  console.log(
+    `Getting fetcher for ${endpoint.getName()}`,
+    endpoint,
+    req.getInput(),
+  );
   return endpoint.provider.getConnectionConfig(
     endpoint.getName(),
     chainId,

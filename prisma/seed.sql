@@ -33,13 +33,13 @@ INSERT INTO "public"."event_fetch_request" ("id", "createdAt", "updatedAt", "tag
  }', 'test_user');
 
 INSERT INTO "public"."event_fetch_request_trigger_function" ("id", "event_fetch_request_id", "function_name", "added_by")
-		VALUES(0, 0, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
+		VALUES(0, 1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
 
 INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name")
 		VALUES(0, 0, 'test_user', 2, 'test_action'), (1, 1, 'test_user', 2, 'test_alert');
 
 INSERT INTO "public"."action_condition" ("id", "action_id", "field", "operator", "value")
-		VALUES(1, 0, '$."priceUsd"', 'gt', '2030'), (2, 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (3, 1, '$."change_percentage"', 'gte', '10'), (6, 1, '$."direction"', 'eq', '"UP"'), (7, 1, '$."token"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (8, 1, '$."chain_id"', 'eq', '1'), (9, 1, '$."duration"', 'eq', '"30D"');
+		VALUES(1, 0, '$."priceUsd"', 'gt', '2030'), (2, 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (3, 1, '$."change_percentage"', 'gte', '10'), (6, 1, '$."direction"', 'eq', '"UP"'), (7, 1, '$."token"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (8, 1, '$."chain_id"', 'eq', '2'), (9, 1, '$."duration"', 'eq', '"30D"');
 
 INSERT INTO "public"."destination" ("id", "action_id", "type")
 		VALUES(1, 0, 'telegram'), (2, 0, 'discord'), (3, 1, 'discord'), (4, 1, 'telegram');
@@ -150,7 +150,7 @@ $BODY$;
 select find_matching_actions('{"priceUsd": "2020", "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"}');
 select find_matching_actions('{
   "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  "chain_id": 1,
+  "chain_id": 2,
   "duration": "30D",
   "change_percentage": 10.34243425,
   "changeUsd": 713.6668745306151,

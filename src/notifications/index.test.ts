@@ -27,13 +27,15 @@ describe("Producers Test", () => {
     const manager = new DataProducerWorkerManager(publisher);
     const consumer_manager = new DataConsumerWorkerManager(consumer);
 
-    const newBlockChannelId = getNewBlocksChannel(1);
+    //chain id 2 is mainnet
+    const newBlockChannelId = getNewBlocksChannel(2);
+
     const id = manager.create(
       newBlockChannelId,
-      getEventFetchRequestRecordFromId(0),
+      await getEventFetchRequestRecordFromId(0),
     );
 
-    const eventFetchRecord = getEventFetchRequestRecordFromId(1);
+    const eventFetchRecord = await getEventFetchRequestRecordFromId(1);
 
     const getMainnetTokenPricesId = manager.create("test_2", eventFetchRecord);
 
