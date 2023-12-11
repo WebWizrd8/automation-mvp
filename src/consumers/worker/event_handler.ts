@@ -6,7 +6,6 @@ import {
   getEventTagRecordFromId,
 } from "../../db/event";
 import { Prisma, PrismaClient } from "@prisma/client";
-import _ from "lodash";
 import { getLogger } from "../../utils/logger";
 
 const dbClient = new PrismaClient({ log: ["query"] });
