@@ -1,17 +1,22 @@
+import "dotenv/config";
 import { parentPort, workerData } from "worker_threads";
 import DataProducer from "./producer";
-import { TriggerRequest } from "../triggers";
+import { EventFetchRequestRecord } from "../db/event";
 
-const { triggerRequest } = workerData;
-Object.setPrototypeOf(triggerRequest, TriggerRequest.prototype);
+export interface ProducerWorkerData {
+  eventFetchRequest: EventFetchRequestRecord;
+}
+
+const { eventFetchRequest }: ProducerWorkerData = workerData;
+Object.setPrototypeOf(eventFetchRequest, EventFetchRequestRecord.prototype);
 
 console.log(
-  `Worker received endpoint: ${JSON.stringify(triggerRequest, null, 2)}`,
+  `Worker received endpoint: ${JSON.stringify(eventFetchRequest, null, 2)}`,
 );
 
 const run = () => {
   if (parentPort) {
-    const producer = new DataProducer(triggerRequest);
+    const producer = new DataProducer(eventFetchRequest);
     parentPort.on("message", async (message) => {
       switch (message.type) {
         case "start":

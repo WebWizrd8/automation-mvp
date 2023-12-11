@@ -4,9 +4,9 @@ import {
   PubSubPublisher,
   RedisPubSubSystem,
 } from "../producers/queue";
-import { getTriggerRequestFromId } from "../db";
 import { getNewBlocksChannel } from "../producers/types";
 import { DataProducerWorkerManager } from "../producers";
+import { getEventFetchRequestRecordFromId } from "../db/event";
 
 describe("Producers Test", () => {
   let pubsubQueue: RedisPubSubSystem;
@@ -24,31 +24,30 @@ describe("Producers Test", () => {
   });
 
   it("should receive tokenprice on each block", async () => {
-    if (!process.env.DEFINED_API) {
-      throw new Error("DEFINED_API env variable not set");
-    }
     const manager = new DataProducerWorkerManager(publisher);
     const consumer_manager = new DataConsumerWorkerManager(consumer);
 
     const newBlockChannelId = getNewBlocksChannel(1);
-    const id = manager.create(newBlockChannelId, getTriggerRequestFromId(0));
-
-    const getMainnetTokenPricesId = manager.create(
-      "test_2",
-      getTriggerRequestFromId(1),
+    const id = manager.create(
+      newBlockChannelId,
+      getEventFetchRequestRecordFromId(0),
     );
+
+    const eventFetchRecord = getEventFetchRequestRecordFromId(1);
+
+    const getMainnetTokenPricesId = manager.create("test_2", eventFetchRecord);
 
     const consumer_worker_id = await consumer_manager.create(
       "test_2",
-      "test_2",
+      eventFetchRecord,
     );
 
     manager.start(id);
     manager.start(getMainnetTokenPricesId);
     //Timeout to wait for two blocks to be mined
-    await new Promise((resolve) => setTimeout(resolve, 25000));
+    await new Promise((resolve) => setTimeout(resolve, 14000));
     manager.stop(id);
     manager.stop(getMainnetTokenPricesId);
     consumer_manager.stop(consumer_worker_id);
-  }, 25500);
+  }, 14500);
 });

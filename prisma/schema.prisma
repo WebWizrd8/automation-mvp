@@ -25,10 +25,14 @@ model alert_condition {
 }
 
 model chain {
-  id             Int              @id @default(autoincrement())
-  name           String
-  alert          alert[]
-  chain_endpoint chain_endpoint[]
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  alert               alert[]
+  chain_endpoint      chain_endpoint[]
+  provider_chain      provider_chain[]
+  event_tag_chain     event_tag_chain[]
+  event_fetch_request event_fetch_request[]
+  action              action[]
 }
 
 model chain_endpoint {
@@ -39,12 +43,6 @@ model chain_endpoint {
   chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-enum action_type {
-  discord
-  telegram
-  webhook
-}
-
 model alert_destination {
   id             Int         @id @default(autoincrement())
   alert_id       Int
@@ -52,17 +50,138 @@ model alert_destination {
   destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
+enum action_type {
+  discord
+  telegram
+  webhook
+}
+
+model provider {
+  id             Int              @id @default(autoincrement())
+  name           String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  description    String?
+  http_token     String?
+  ws_token       String?
+  provider_chain provider_chain[]
+  endpoint       endpoint[]
+}
+
+model provider_chain {
+  provider_id    Int
+  chain_id       Int
+  provider_chain String
+  provider       provider @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain          chain    @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([provider_id, chain_id])
+}
+
+enum connection_type {
+  http
+  ws
+}
+
+model endpoint {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  description     String?
+  connection_kind connection_type
+  provider_id     Int
+  provider        provider          @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  event_tag_chain event_tag_chain[]
+}
+
+model event_tag {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  description         String?
+  event_tag_chain     event_tag_chain[]
+  event_fetch_request event_fetch_request[]
+}
+
+model event_tag_chain {
+  tag_id      Int
+  chain_id    Int
+  endpoint_id Int
+  tag         event_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain       chain     @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  endpoint    endpoint  @relation(fields: [endpoint_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([tag_id, chain_id])
+}
+
+model event_fetch_request {
+  id                                   Int                                    @id @default(autoincrement())
+  createdAt                            DateTime                               @default(now())
+  updatedAt                            DateTime                               @updatedAt
+  tag_id                               Int
+  chain_id                             Int
+  tag                                  event_tag                              @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chain                                chain                                  @relation(fields: [chain_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payload                              Json
+  added_by                             String
+  event_fetch_request_trigger_function event_fetch_request_trigger_function[]
+}
+
+model token_prices {
+  token_address String
+  chain_id      Int
+  priceUsd      Float
+  timestamp     DateTime
+
+  @@id([token_address, chain_id, timestamp])
+}
+
+model event_fetch_request_trigger_function {
+  id                     Int                 @id @default(autoincrement())
+  event_fetch_request_id Int
+  function_name          String              @unique
+  function_args          Json?
+  event_fetch_request    event_fetch_request @relation(fields: [event_fetch_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  added_by               String
+  action                 action[]
+}
+
+model action {
+  id                                      Int                                  @id @default(autoincrement())
+  event_fetch_request_trigger_function_id Int
+  user_id                                 String
+  chain_id                                Int
+  name                                    String
+  chain                                   chain                                @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  destination                             destination[]
+  action_condition                        action_condition[]
+  event_fetch_request_trigger_function    event_fetch_request_trigger_function @relation(fields: [event_fetch_request_trigger_function_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model action_condition {
+  id        Int                     @id @default(autoincrement())
+  action_id Int
+  field     Unsupported("jsonpath")
+  operator  String
+  value     Json
+  action    action                  @relation(fields: [action_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
 model destination {
   id                           Int                            @id @default(autoincrement())
-  user_id                      String
+  action_id                    Int
   type                         action_type
+  alert_destination            alert_destination[]
+  action                       action                         @relation(fields: [action_id], references: [id])
   discord_destination_payload  discord_destination_payload[]
   telegram_destination_payload telegram_destination_payload[]
-  alert_destination            alert_destination[]
 }
 
 model discord_destination {
   id                          String                        @id @db.Uuid
+  user_id                     String
   discord_user_id             String
   webhook_url                 String
   discord_destination_payload discord_destination_payload[]
@@ -78,6 +197,7 @@ model discord_destination_payload {
 
 model telegram_destination {
   id                           String                         @id @db.Uuid
+  user_id                      String
   chat_id                      String
   telegram_user_id             String
   telegram_destination_payload telegram_destination_payload[]

@@ -1,11 +1,9 @@
 import ApiProvider, { ApiWsInput } from "..";
+import { ProviderRecord } from "../../db/provider";
 import DataFetcher from "../../fetchers/data-fetcher";
 import { BufferLike } from "../../fetchers/types";
 import WebSocketFetcher from "../../fetchers/ws-fetcher";
 import { getLogger } from "../../utils/logger";
-
-const URL =
-  "wss://eth-mainnet.g.alchemy.com/v2/SQcfPp5joj0Lj2fpZ6nEaPF-B8eX_3Vx";
 
 export interface SubscribeInput {
   jsonrpc: "2.0";
@@ -17,22 +15,32 @@ export interface SubscribeInput {
 const logger = getLogger("AlchemyProvider");
 
 export class AlchemyProviderWsApi extends ApiProvider {
-  constructor() {
-    super();
+  record: ProviderRecord;
+  constructor(record: ProviderRecord) {
+    super(record);
+    this.record = record;
   }
 
-  getUrl(_chainId: number) {
-    return URL;
+  getUrl(chainId: number) {
+    if (chainId === 1) {
+      return `wss://eth-mainnet.g.alchemy.com/v2/${this.record.ws_token}`;
+    } else {
+      throw new Error(`Unknown chainId: ${chainId} for AlchemyProviderWsApi`);
+    }
   }
 
-  getFetcher(
+  //This should return only connection configurations
+  //The fetcher should be constructed by endpoint and this method will be called by it.
+  getConnectionConfig(
     name: string,
     chainId: number,
-    type: string,
+    connnection_type: string,
     apiInputData: ApiWsInput,
   ): DataFetcher<BufferLike> {
-    if (type !== "ws") {
-      throw new Error(`Unknown type: ${type} for AlchemyProviderWsApi`);
+    if (connnection_type !== "ws") {
+      throw new Error(
+        `Unknown type: ${connnection_type} for AlchemyProviderWsApi`,
+      );
     }
     const { input } = apiInputData;
     const subscribeInput = JSON.parse(input);

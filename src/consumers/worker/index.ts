@@ -1,17 +1,24 @@
 //Disable no-case-declarations lint
 /* eslint-disable no-case-declarations */
+import "dotenv/config";
 import { parentPort, workerData } from "worker_threads";
-import { find_matching_alerts } from "../db/functions";
-import { getLogger } from "../utils/logger";
-import { handleAlerts } from "./alert_handler";
+import { getLogger } from "../../utils/logger";
+import { handleOnMessage } from "./event_handler";
+import { EventFetchRequestRecord } from "../../db/event";
 
-const { triggerId }: { triggerId: string } = workerData;
+export interface ConsumerWorkerData {
+  eventFetchRequestRecord: EventFetchRequestRecord;
+}
 
 const logger = getLogger("consumer_worker");
 
-logger.info(`Consumer worker received id: ${triggerId}`);
-
 const run = () => {
+  const { eventFetchRequestRecord }: ConsumerWorkerData = workerData;
+  Object.setPrototypeOf(
+    eventFetchRequestRecord,
+    EventFetchRequestRecord.prototype,
+  );
+  logger.info(`Consumer worker started for id: ${eventFetchRequestRecord}`);
   if (parentPort) {
     parentPort.on("message", async (message) => {
       switch (message.type) {
@@ -19,13 +26,14 @@ const run = () => {
           break;
         case "message":
           logger.info("Received message from producer", message.message);
+
           // Find all alerts that are interested in this message
           try {
-            const messageJson: Record<string, any> = JSON.parse(message.message);
-            const alerts = await find_matching_alerts(messageJson);
-            logger.info("Alerts found", alerts);
-            //TODO: Send alerts to alerting system
-            if (alerts) await handleAlerts(alerts, messageJson);
+            const messageParsed: Record<string, unknown> = JSON.parse(
+              message.message,
+            );
+
+            await handleOnMessage(eventFetchRequestRecord, messageParsed);
           } catch (error) {
             logger.error("failed to handle message", error);
             break;

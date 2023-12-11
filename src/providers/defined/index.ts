@@ -1,9 +1,9 @@
-import dotenv from "dotenv";
 import { EVMChains, EVMChainId } from "../../chains/types";
 import HttpFetcher from "../../fetchers/http-fetcher";
 import DataFetcher from "../../fetchers/data-fetcher";
 import { BufferLike } from "../../fetchers/types";
 import ApiProvider, { ApiHttpInput } from "..";
+import { ProviderRecord } from "../../db/provider";
 
 type Address = string;
 type ChainInput = EVMChainId | EVMChains;
@@ -14,22 +14,6 @@ const chainMapping = {
   [EVMChainId.ZKSYNC]: 324,
   [EVMChainId.SCROLL]: 534352,
 };
-
-const URL = "https://graph.defined.fi/graphql";
-
-function getUrl() {
-  return URL;
-}
-
-function getAxoisConfig() {
-  return {
-    url: getUrl(),
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `${process.env.DEFINED_API}`,
-    },
-  };
-}
 
 export default class DefinedProvider {
   public getChainId(chainId: ChainInput): number {
@@ -56,31 +40,50 @@ export type Price = {
 };
 
 export class DefinedProviderHttpApi extends ApiProvider {
-  constructor() {
-    super();
-    dotenv.config();
-  }
-  getUrl(_chainId: number) {
-    return URL;
+  record: ProviderRecord;
+  constructor(record: ProviderRecord) {
+    super(record);
+    this.record = record;
   }
 
-  public getFetcher(
+  getUrl(_chainId: number) {
+    return "https://graph.defined.fi/graphql";
+  }
+
+  public getConnectionConfig(
     name: string,
-    _chainId: number,
-    type: string,
+    chainId: number,
+    connection_type: string,
     apiInputData: ApiHttpInput,
   ): DataFetcher<BufferLike> {
-    if (type !== "http") {
-      throw new Error(`Unknown type: ${type} for DefinedProviderHttpApi`);
+    if (connection_type !== "http") {
+      throw new Error(
+        `Unknown type: ${connection_type} for DefinedProviderHttpApi`,
+      );
     }
+
+    const axiosConfig = {
+      url: this.getUrl(chainId),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `${this.record.http_token}`,
+      },
+    };
+
     const { input, channelIdForTick } = apiInputData;
     if (name === "getTokenPrices") {
-      return this.getTokenPrice(JSON.parse(input), channelIdForTick);
+      return this.getTokenPrice(
+        axiosConfig,
+        JSON.parse(input),
+        channelIdForTick,
+      );
     }
+
     throw new Error(`Unknown trigger name: ${name}`);
   }
 
   public getTokenPrice(
+    axiosConfig: Record<string, unknown>,
     input: GetTokenPricesInput,
     channelIdForTick: string,
   ): DataFetcher<BufferLike> {
@@ -107,8 +110,9 @@ export class DefinedProviderHttpApi extends ApiProvider {
   			}
         }`;
     }
+
     const config = {
-      ...getAxoisConfig(),
+      ...axiosConfig,
       method: "post",
       data: JSON.stringify({ query }),
     };

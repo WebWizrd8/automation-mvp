@@ -60,6 +60,7 @@ export default class HttpFetcher<ResType> extends DataFetcher<ResType> {
 
   private async fetchData() {
     try {
+      console.log("Fetching data...with config", this.axoisConfig);
       const response = await axios(this.axoisConfig);
       //console.log("HTTP Fetch Response:", response.data);
       let data;

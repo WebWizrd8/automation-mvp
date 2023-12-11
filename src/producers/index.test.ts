@@ -1,7 +1,7 @@
 import { DataProducerWorkerManager } from ".";
+import { getEventFetchRequestRecordFromId } from "../db/event";
 import { BufferLike } from "../fetchers/types";
 import { PubSubConsumer, PubSubPublisher, RedisPubSubSystem } from "./queue";
-import { getTriggerRequestFromId } from "../db";
 import { getNewBlocksChannel } from "./types";
 
 describe("Producers Test", () => {
@@ -29,7 +29,7 @@ describe("Producers Test", () => {
     await consumer.subscribe("test_1", printCallback);
 
     const manager = new DataProducerWorkerManager(publisher);
-    const id = manager.create("test_1", getTriggerRequestFromId(0));
+    const id = manager.create("test_1", getEventFetchRequestRecordFromId(0));
     manager.start(id);
     await new Promise((resolve) => setTimeout(resolve, 3000));
     manager.stop(id);
@@ -37,19 +37,19 @@ describe("Producers Test", () => {
   }, 3500);
 
   it("should receive tokenprice on each block", async () => {
-    if (!process.env.DEFINED_API) {
-      throw new Error("DEFINED_URL env variable not set");
-    }
     const manager = new DataProducerWorkerManager(publisher);
     const newBlockChannelId = getNewBlocksChannel(1);
-    const id = manager.create(newBlockChannelId, getTriggerRequestFromId(0));
+    const id = manager.create(
+      newBlockChannelId,
+      getEventFetchRequestRecordFromId(0),
+    );
     const printCallback = (message: BufferLike) => {
       console.log("printCallback", message);
     };
     await consumer.subscribe(newBlockChannelId, printCallback);
     const getMainnetTokenPricesId = manager.create(
       "test_2",
-      getTriggerRequestFromId(1),
+      getEventFetchRequestRecordFromId(1),
     );
 
     const getMainnetTokenPricesCallback = jest.fn();
