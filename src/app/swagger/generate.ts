@@ -1,7 +1,7 @@
 import swaggerAutogen from "swagger-autogen";
 
 const outputFile = "./swagger.spec.json";
-const endpointsFiles = ["../index.ts", "../routes/*.route.ts"];
+const endpointsFiles = ["../index.ts"];
 
 const swaggerOptions = {
   info: {
