@@ -19,8 +19,14 @@ eventFetchRouter.get(
   eventFetchController.getEventFetchRequestById,
 );
 
-// eventFetchRouter.get( "/base-listeners/:id",
-//   eventFetchController.getEventFetchRequestById,
-// );
+eventFetchRouter.get(
+  "/base-listeners/triggers/:id",
+  eventFetchController.getEventFetchRequestFunctionById,
+);
+
+eventFetchRouter.get(
+  "/base-listeners/trigger-with-actions/:id",
+  eventFetchController.getEventFetchRequestFunctionForIdWithActions,
+);
 
 export default eventFetchRouter;

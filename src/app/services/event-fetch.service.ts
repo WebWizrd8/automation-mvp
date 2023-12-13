@@ -1,15 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import dbClient from "../../utils/db-client";
-
-interface EventFetchTagResponse {
-  id: number;
-  name: string;
-  description: string | null;
-  chains: {
-    chainId: number;
-    endpointId: number;
-  }[];
-}
+import {
+  EventFetchRequestResponse,
+  EventFetchRequestTriggerResponse,
+  EventFetchRequestTriggerWithConditionsResponse,
+  EventFetchTagResponse,
+} from "app/models/event-fetch";
 
 export class EventTagService {
   private readonly client: PrismaClient;
@@ -71,14 +67,6 @@ export class EventTagService {
   }
 }
 
-interface EventFetchRequestResponse {
-  id: number;
-  tagId: number;
-  chainId: number;
-  payload: string | null;
-  addedBy: string | null;
-}
-
 export class EventFetchRequestService {
   private readonly client: PrismaClient;
 
@@ -117,5 +105,88 @@ export class EventFetchRequestService {
       payload: event.payload ? JSON.stringify(event.payload) : null,
       addedBy: event.added_by,
     };
+  }
+}
+
+export class EventFetchRequestFunctionService {
+  private readonly client: PrismaClient;
+
+  constructor() {
+    this.client = dbClient;
+  }
+
+  async getEventFetchRequestFunctionById(
+    id: number,
+  ): Promise<EventFetchRequestTriggerResponse | null> {
+    const event =
+      await this.client.event_fetch_request_trigger_function.findUnique({
+        where: { id },
+      });
+    if (!event) {
+      return null;
+    }
+
+    return {
+      id: event.id,
+      eventFetchRequestId: event.event_fetch_request_id,
+      functionName: event.function_name,
+      functionArgs: event.function_args
+        ? JSON.stringify(event.function_args)
+        : null,
+      addedBy: event.added_by,
+    };
+  }
+
+  async getEventFetchRequestFunctionForIdWithActions(
+    id: number,
+  ): Promise<EventFetchRequestTriggerWithConditionsResponse | null> {
+    console.log("Id", id);
+    const event =
+      await this.client.event_fetch_request_trigger_function.findUnique({
+        where: { id },
+        include: { action: true },
+      });
+    console.log(event);
+    if (!event) {
+      return null;
+    }
+    const actionsWithConditions = [];
+    for (const action of event.action) {
+      const actionRecord = await this.client.action.findUnique({
+        where: { id: action.id },
+        include: { action_condition: true, destination: true },
+      });
+      const actionWithConditions = {
+        id: action.id,
+        name: action.name,
+        chainId: action.chain_id,
+        conditions: actionRecord!.action_condition.map((condition) => {
+          return {
+            id: condition.id,
+            operator: condition.operator,
+            value: JSON.stringify(condition.value),
+          };
+        }),
+        destinations: actionRecord!.destination.map((destination) => {
+          return {
+            id: destination.id,
+            destinationType: destination.type,
+          };
+        }),
+      };
+      actionsWithConditions.push(actionWithConditions);
+    }
+    const mappedEvent = {
+      id: event.id,
+      eventFetchRequestId: event.event_fetch_request_id,
+      functionName: event.function_name,
+      functionArgs: event.function_args
+        ? JSON.stringify(event.function_args)
+        : null,
+      addedBy: event.added_by,
+      actions: actionsWithConditions,
+    };
+
+    return mappedEvent;
   }
 }
