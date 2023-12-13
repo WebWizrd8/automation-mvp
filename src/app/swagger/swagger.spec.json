@@ -123,6 +123,16 @@
           }
         }
       }
+    },
+    "/chain-event/base-listeners/trigger-with-actions": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   }
 }

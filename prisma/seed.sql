@@ -39,24 +39,13 @@ INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", 
 		VALUES(0, 0, 'test_user', 2, 'test_action'), (1, 1, 'test_user', 2, 'test_alert');
 
 INSERT INTO "public"."action_condition" ("id", "action_id", "field", "operator", "value")
-		VALUES(1, 0, '$."priceUsd"', 'gt', '2030'), (2, 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (3, 1, '$."change_percentage"', 'gte', '10'), (6, 1, '$."direction"', 'eq', '"UP"'), (7, 1, '$."token"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (8, 1, '$."chain_id"', 'eq', '2'), (9, 1, '$."duration"', 'eq', '"30D"');
+		VALUES(1, 0, '$."priceUsd"', 'gt', '2030'), (2, 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (3, 1, '$."change_percentage"', 'gte', '3'), (6, 1, '$."direction"', 'eq', '"UP"'), (7, 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (8, 1, '$."chain_id"', 'eq', '2'), (9, 1, '$."duration"', 'eq', '"30D"');
 
-INSERT INTO "public"."destination" ("id", "action_id", "type")
-		VALUES(1, 0, 'telegram'), (2, 0, 'discord'), (3, 1, 'discord'), (4, 1, 'telegram');
-
-INSERT INTO "public"."discord_destination" ("id","user_id", "discord_user_id", "webhook_url") VALUES
-('416e2a18-7320-43ff-9d28-a0996ab9949c', 'test_user', 'bruce_wayne', 'https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2');
-
-
-INSERT INTO "public"."discord_destination_payload" ("destination_id", "discord_destination_id", "template") VALUES (2, '416e2a18-7320-43ff-9d28-a0996ab9949c', 'ETH Price: {{priceUsd}}'),
-(3, '416e2a18-7320-43ff-9d28-a0996ab9949c', 'ETH Changed by {{change_percentage}} in {{duration}}.');
-
-INSERT INTO "public"."telegram_destination" ("id", "user_id", "chat_id", "telegram_user_id")
-		VALUES('f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'test_user','6200972469', 'LakshyaSky');
-
-INSERT INTO "public"."telegram_destination_payload" ("destination_id", "telegram_destination_id", "template")
-		VALUES(1, 'f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'ETH Price: {{priceUsd}}'), (4, 'f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'ETH Changed by {{change_percentage}} in {{duration}}.');
-
+INSERT INTO "public"."destination" ("id", "action_id", "type", "destination_config") VALUES
+(1, 0, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
+(2, 0, 'discord', '{"template": "ETH Price: {{priceUsd}}", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(3, 1, 'discord', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(4, 1, 'telegram', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}');
 
 
 CREATE TYPE public.condition_type AS (

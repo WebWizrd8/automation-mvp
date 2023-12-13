@@ -29,4 +29,9 @@ eventFetchRouter.get(
   eventFetchController.getEventFetchRequestFunctionForIdWithActions,
 );
 
+eventFetchRouter.post(
+  "/base-listeners/trigger-with-actions",
+  eventFetchController.createEventFetchRequestFunctionWithActions,
+);
+
 export default eventFetchRouter;

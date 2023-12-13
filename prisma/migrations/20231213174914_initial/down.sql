@@ -46,18 +46,6 @@ ALTER TABLE "action_condition" DROP CONSTRAINT "action_condition_action_id_fkey"
 -- DropForeignKey
 ALTER TABLE "destination" DROP CONSTRAINT "destination_action_id_fkey";
 
--- DropForeignKey
-ALTER TABLE "discord_destination_payload" DROP CONSTRAINT "discord_destination_payload_destination_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "discord_destination_payload" DROP CONSTRAINT "discord_destination_payload_discord_destination_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "telegram_destination_payload" DROP CONSTRAINT "telegram_destination_payload_destination_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "telegram_destination_payload" DROP CONSTRAINT "telegram_destination_payload_telegram_destination_id_fkey";
-
 -- DropTable
 DROP TABLE "alert";
 
@@ -105,21 +93,6 @@ DROP TABLE "action_condition";
 
 -- DropTable
 DROP TABLE "destination";
-
--- DropTable
-DROP TABLE "discord_destination";
-
--- DropTable
-DROP TABLE "discord_destination_payload";
-
--- DropTable
-DROP TABLE "telegram_destination";
-
--- DropTable
-DROP TABLE "telegram_temporary_token";
-
--- DropTable
-DROP TABLE "telegram_destination_payload";
 
 -- DropEnum
 DROP TYPE "action_type";

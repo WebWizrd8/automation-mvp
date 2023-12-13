@@ -20,14 +20,14 @@ export const getActionFromId = async (id: number) => {
   });
 };
 
-export const getDestinationsForActions = async (alertId: number) => {
-  const alert_destinations = await dbClient.action.findMany({
+export const getDestinationsForActions = async (actionId: number) => {
+  const action_destinations = await dbClient.action.findMany({
     where: {
-      id: alertId,
+      id: actionId,
     },
     include: {
       destination: true,
     },
   });
-  return alert_destinations;
+  return action_destinations;
 };

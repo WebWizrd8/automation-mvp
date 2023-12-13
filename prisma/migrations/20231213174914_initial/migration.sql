@@ -168,56 +168,9 @@ CREATE TABLE "destination" (
     "id" SERIAL NOT NULL,
     "action_id" INTEGER NOT NULL,
     "type" "action_type" NOT NULL,
+    "destination_config" JSONB NOT NULL,
 
     CONSTRAINT "destination_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "discord_destination" (
-    "id" UUID NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "discord_user_id" TEXT NOT NULL,
-    "webhook_url" TEXT NOT NULL,
-
-    CONSTRAINT "discord_destination_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "discord_destination_payload" (
-    "destination_id" INTEGER NOT NULL,
-    "discord_destination_id" UUID NOT NULL,
-    "template" TEXT NOT NULL,
-
-    CONSTRAINT "discord_destination_payload_pkey" PRIMARY KEY ("destination_id")
-);
-
--- CreateTable
-CREATE TABLE "telegram_destination" (
-    "id" UUID NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "chat_id" TEXT NOT NULL,
-    "telegram_user_id" TEXT NOT NULL,
-
-    CONSTRAINT "telegram_destination_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "telegram_temporary_token" (
-    "id" UUID NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL,
-    "expires_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "telegram_temporary_token_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "telegram_destination_payload" (
-    "destination_id" INTEGER NOT NULL,
-    "telegram_destination_id" UUID NOT NULL,
-    "template" TEXT NOT NULL,
-
-    CONSTRAINT "telegram_destination_payload_pkey" PRIMARY KEY ("destination_id")
 );
 
 -- CreateIndex
@@ -276,15 +229,3 @@ ALTER TABLE "action_condition" ADD CONSTRAINT "action_condition_action_id_fkey" 
 
 -- AddForeignKey
 ALTER TABLE "destination" ADD CONSTRAINT "destination_action_id_fkey" FOREIGN KEY ("action_id") REFERENCES "action"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "discord_destination_payload" ADD CONSTRAINT "discord_destination_payload_destination_id_fkey" FOREIGN KEY ("destination_id") REFERENCES "destination"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "discord_destination_payload" ADD CONSTRAINT "discord_destination_payload_discord_destination_id_fkey" FOREIGN KEY ("discord_destination_id") REFERENCES "discord_destination"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "telegram_destination_payload" ADD CONSTRAINT "telegram_destination_payload_destination_id_fkey" FOREIGN KEY ("destination_id") REFERENCES "destination"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "telegram_destination_payload" ADD CONSTRAINT "telegram_destination_payload_telegram_destination_id_fkey" FOREIGN KEY ("telegram_destination_id") REFERENCES "telegram_destination"("id") ON DELETE CASCADE ON UPDATE CASCADE;

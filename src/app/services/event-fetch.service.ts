@@ -3,9 +3,13 @@ import dbClient from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
   EventFetchRequestTriggerResponse,
+  EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
   EventFetchTagResponse,
 } from "app/models/event-fetch";
+import { getLogger } from "../../utils/logger";
+
+const logger = getLogger("event-fetch.service");
 
 export class EventTagService {
   private readonly client: PrismaClient;
@@ -156,6 +160,31 @@ export class EventFetchRequestFunctionService {
         where: { id: action.id },
         include: { action_condition: true, destination: true },
       });
+
+      const destinations = [];
+      for (const destination of actionRecord!.destination) {
+        switch (destination.type) {
+          case "discord": {
+            destinations.push({
+              id: destination.id,
+              destinationType: destination.type,
+              destinationConfig: JSON.stringify(destination.destination_config),
+            });
+            break;
+          }
+          case "telegram": {
+            destinations.push({
+              id: destination.id,
+              destinationType: destination.type,
+              destinationConfig: JSON.stringify(destination.destination_config),
+            });
+            break;
+          }
+          case "webhook":
+          default:
+            logger.error("Unknown destination type");
+        }
+      }
       const actionWithConditions = {
         id: action.id,
         name: action.name,
@@ -167,12 +196,7 @@ export class EventFetchRequestFunctionService {
             value: JSON.stringify(condition.value),
           };
         }),
-        destinations: actionRecord!.destination.map((destination) => {
-          return {
-            id: destination.id,
-            destinationType: destination.type,
-          };
-        }),
+        destinations,
       };
       actionsWithConditions.push(actionWithConditions);
     }
@@ -188,5 +212,53 @@ export class EventFetchRequestFunctionService {
     };
 
     return mappedEvent;
+  }
+
+  async createEventFetchRequestFunctionForIdWithActions(
+    data: EventFetchRequestTriggerWithConditionsRequest,
+  ) {
+    const eventData = {
+      event_fetch_request_id: data.eventFetchRequestId,
+      function_name: data.functionName,
+      function_args: data.functionArgs ? JSON.parse(data.functionArgs) : null,
+      added_by: data.addedBy,
+    };
+    logger.info("Creating event fetch request trigger function", eventData);
+    const event = await this.client.event_fetch_request_trigger_function.create(
+      {
+        data: {
+          ...eventData,
+        },
+      },
+    );
+
+    const actions = data.actions.map((action) => {
+      return {
+        name: action.name,
+        chain_id: action.chainId,
+        user_id: action.userId,
+        event_fetch_request_trigger_function_id: event.id,
+        // action_condition: {
+        //   create: action.conditions.map((condition) => {
+        //     return {
+        //       operator: condition.operator,
+        //       value: JSON.parse(condition.value),
+        //     };
+        //   }),
+        // },
+        // destination: {
+        //   create: action.destinations.map((destination) => {
+        //     return {
+        //       type: destination.destinationType,
+        //       destination_config: JSON.parse(destination.destinationConfig),
+        //     };
+        //   }),
+        // },
+      };
+    });
+    console.log(actions);
+    const actionsResp = await this.client.action.createMany({
+      data: actions,
+    });
   }
 }

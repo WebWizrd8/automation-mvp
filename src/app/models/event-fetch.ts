@@ -23,7 +23,7 @@ export interface EventFetchRequestTriggerResponse {
   eventFetchRequestId: number;
   functionName: string;
   functionArgs: string | null;
-  addedBy: string | null;
+  addedBy: string;
 }
 
 export interface EventFetchRequestTriggerWithConditionsResponse
@@ -40,6 +40,24 @@ export interface EventFetchRequestTriggerWithConditionsResponse
     destinations: {
       id: number;
       destinationType: string;
+      destinationConfig: string;
+    }[];
+  }[];
+}
+
+export interface EventFetchRequestTriggerWithConditionsRequest
+  extends EventFetchRequestTriggerResponse {
+  actions: {
+    name: string;
+    chainId: number;
+    userId: string;
+    conditions: {
+      operator: string;
+      value: string;
+    }[];
+    destinations: {
+      destinationType: string;
+      destinationConfig: string;
     }[];
   }[];
 }
