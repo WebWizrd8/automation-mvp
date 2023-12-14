@@ -1,3 +1,4 @@
+import { action_type } from "@prisma/client";
 import { z } from "zod";
 
 export interface EventFetchTagResponse {
@@ -39,14 +40,21 @@ export interface EventFetchRequestTriggerWithConditionsResponse
     }[];
     destinations: {
       id: number;
-      destinationType: string;
+      destinationType: action_type;
       destinationConfig: string;
     }[];
   }[];
 }
 
+export interface EventFetchRequestTriggerRequest {
+  eventFetchRequestId: number;
+  functionName: string;
+  functionArgs: string | null;
+  addedBy: string;
+}
+
 export interface EventFetchRequestTriggerWithConditionsRequest
-  extends EventFetchRequestTriggerResponse {
+  extends EventFetchRequestTriggerRequest {
   actions: {
     name: string;
     chainId: number;
@@ -54,9 +62,10 @@ export interface EventFetchRequestTriggerWithConditionsRequest
     conditions: {
       operator: string;
       value: string;
+      field: string;
     }[];
     destinations: {
-      destinationType: string;
+      destinationType: action_type;
       destinationConfig: string;
     }[];
   }[];

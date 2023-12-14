@@ -4,6 +4,13 @@ import { EndpointRecord, getEndpointRecordFromId } from "./endpoint";
 
 const logger = getLogger("db/event.ts");
 
+export interface ActionConditionRecord {
+  id: number;
+  operator: string;
+  value: string;
+  field: string;
+}
+
 export class EventTagRecord {
   id: number;
   name: string;

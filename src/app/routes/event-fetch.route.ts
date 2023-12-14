@@ -31,7 +31,18 @@ eventFetchRouter.get(
 
 eventFetchRouter.post(
   "/base-listeners/trigger-with-actions",
-  eventFetchController.createEventFetchRequestFunctionWithActions,
+  async (req, res) => {
+    /*  #swagger.parameters['body'] = {
+            in: 'body',
+            description: 'Add a new trigger with actions',
+            schema: { $ref: '#/definitions/EventFetchRequest' }
+    } 
+*/
+    return await eventFetchController.createEventFetchRequestFunctionWithActions(
+      req,
+      res,
+    );
+  },
 );
 
 export default eventFetchRouter;
