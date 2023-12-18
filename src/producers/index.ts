@@ -19,10 +19,10 @@ export class DataProducerWorkerManager {
     this.pubSubQueue = pubSubQueue;
   }
 
-  create(id: string, eventFetchRequest: EventFetchRequestRecord): string {
+  create(id: string, eventFetchRequestRecord: EventFetchRequestRecord): string {
     const worker = new Worker("./dist/producers/producer_worker.js", {
       workerData: {
-        eventFetchRequest,
+        eventFetchRequestRecord: eventFetchRequestRecord,
       } as ProducerWorkerData,
     });
     worker.on("message", async (message) => {
@@ -35,7 +35,7 @@ export class DataProducerWorkerManager {
     const workerDetails: WorkerDetails = {
       worker,
       status: "created",
-      eventFetchRequest: eventFetchRequest,
+      eventFetchRequest: eventFetchRequestRecord,
     };
     this.workers.set(id, workerDetails);
     return id;

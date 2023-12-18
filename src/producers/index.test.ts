@@ -29,7 +29,10 @@ describe("Producers Test", () => {
     await consumer.subscribe("test_1", printCallback);
 
     const manager = new DataProducerWorkerManager(publisher);
-    const id = manager.create("test_1", getEventFetchRequestRecordFromId(0));
+    const id = manager.create(
+      "test_1",
+      await getEventFetchRequestRecordFromId(0),
+    );
     manager.start(id);
     await new Promise((resolve) => setTimeout(resolve, 3000));
     manager.stop(id);
@@ -38,10 +41,12 @@ describe("Producers Test", () => {
 
   it("should receive tokenprice on each block", async () => {
     const manager = new DataProducerWorkerManager(publisher);
-    const newBlockChannelId = getNewBlocksChannel(1);
+
+    //chain id 2 is mainnet
+    const newBlockChannelId = getNewBlocksChannel(2);
     const id = manager.create(
       newBlockChannelId,
-      getEventFetchRequestRecordFromId(0),
+      await getEventFetchRequestRecordFromId(0),
     );
     const printCallback = (message: BufferLike) => {
       console.log("printCallback", message);
@@ -49,7 +54,7 @@ describe("Producers Test", () => {
     await consumer.subscribe(newBlockChannelId, printCallback);
     const getMainnetTokenPricesId = manager.create(
       "test_2",
-      getEventFetchRequestRecordFromId(1),
+      await getEventFetchRequestRecordFromId(1),
     );
 
     const getMainnetTokenPricesCallback = jest.fn();

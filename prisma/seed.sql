@@ -33,30 +33,19 @@ INSERT INTO "public"."event_fetch_request" ("id", "createdAt", "updatedAt", "tag
  }', 'test_user');
 
 INSERT INTO "public"."event_fetch_request_trigger_function" ("id", "event_fetch_request_id", "function_name", "added_by")
-		VALUES(0, 0, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
+		VALUES(0, 1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
 
 INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name")
 		VALUES(0, 0, 'test_user', 2, 'test_action'), (1, 1, 'test_user', 2, 'test_alert');
 
-INSERT INTO "public"."action_condition" ("id", "action_id", "field", "operator", "value")
-		VALUES(1, 0, '$."priceUsd"', 'gt', '2030'), (2, 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (3, 1, '$."change_percentage"', 'gte', '10'), (6, 1, '$."direction"', 'eq', '"UP"'), (7, 1, '$."token"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), (8, 1, '$."chain_id"', 'eq', '1'), (9, 1, '$."duration"', 'eq', '"30D"');
+INSERT INTO "public"."action_condition" ("action_id", "field", "operator", "value")
+		VALUES( 0, '$."priceUsd"', 'gt', '2030'), ( 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."change_percentage"', 'gte', '3'), ( 1, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."chain_id"', 'eq', '2'), ( 1, '$."duration"', 'eq', '"30D"');
 
-INSERT INTO "public"."destination" ("id", "action_id", "type")
-		VALUES(1, 0, 'telegram'), (2, 0, 'discord'), (3, 1, 'discord'), (4, 1, 'telegram');
-
-INSERT INTO "public"."discord_destination" ("id","user_id", "discord_user_id", "webhook_url") VALUES
-('416e2a18-7320-43ff-9d28-a0996ab9949c', 'test_user', 'bruce_wayne', 'https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2');
-
-
-INSERT INTO "public"."discord_destination_payload" ("destination_id", "discord_destination_id", "template") VALUES (2, '416e2a18-7320-43ff-9d28-a0996ab9949c', 'ETH Price: {{priceUsd}}'),
-(3, '416e2a18-7320-43ff-9d28-a0996ab9949c', 'ETH Changed by {{change_percentage}} in {{duration}}.');
-
-INSERT INTO "public"."telegram_destination" ("id", "user_id", "chat_id", "telegram_user_id")
-		VALUES('f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'test_user','6200972469', 'LakshyaSky');
-
-INSERT INTO "public"."telegram_destination_payload" ("destination_id", "telegram_destination_id", "template")
-		VALUES(1, 'f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'ETH Price: {{priceUsd}}'), (4, 'f8d1b1c5-102f-4c02-9e7f-fcdd99071a02', 'ETH Changed by {{change_percentage}} in {{duration}}.');
-
+INSERT INTO "public"."destination" ("action_id", "type", "destination_config") VALUES
+(0, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
+(0, 'discord', '{"template": "ETH Price: {{priceUsd}}", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(1, 'discord', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(1, 'telegram', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}');
 
 
 CREATE TYPE public.condition_type AS (
@@ -150,7 +139,7 @@ $BODY$;
 select find_matching_actions('{"priceUsd": "2020", "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"}');
 select find_matching_actions('{
   "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  "chain_id": 1,
+  "chain_id": 2,
   "duration": "30D",
   "change_percentage": 10.34243425,
   "changeUsd": 713.6668745306151,

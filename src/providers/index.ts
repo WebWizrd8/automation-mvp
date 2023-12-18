@@ -2,14 +2,15 @@ import { ProviderRecord } from "../db/provider";
 import DataFetcher from "../fetchers/data-fetcher";
 import { BufferLike } from "../fetchers/types";
 
-export interface ApiHttpInput {
-  input: string;
+interface ApiInput {
+  input: string | null;
+}
+
+export interface ApiHttpInput extends ApiInput {
   channelIdForTick: string;
 }
 
-export interface ApiWsInput {
-  input: string;
-}
+export interface ApiWsInput extends ApiInput {}
 
 export default abstract class ApiProvider {
   record: ProviderRecord;

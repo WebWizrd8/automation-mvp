@@ -2,20 +2,29 @@ import "dotenv/config";
 import { parentPort, workerData } from "worker_threads";
 import DataProducer from "./producer";
 import { EventFetchRequestRecord } from "../db/event";
+import { EventFetchRequest } from "../events";
+import { getLogger } from "../utils/logger";
 
 export interface ProducerWorkerData {
-  eventFetchRequest: EventFetchRequestRecord;
+  eventFetchRequestRecord: EventFetchRequestRecord;
 }
 
-const { eventFetchRequest }: ProducerWorkerData = workerData;
-Object.setPrototypeOf(eventFetchRequest, EventFetchRequestRecord.prototype);
-
-console.log(
-  `Worker received endpoint: ${JSON.stringify(eventFetchRequest, null, 2)}`,
+const { eventFetchRequestRecord }: ProducerWorkerData = workerData;
+Object.setPrototypeOf(
+  eventFetchRequestRecord,
+  EventFetchRequestRecord.prototype,
 );
 
-const run = () => {
+const logger = getLogger("producer_worker.ts");
+
+logger.info(`Producer worker started with data`, eventFetchRequestRecord);
+
+const run = async () => {
   if (parentPort) {
+    const eventFetchRequest = await EventFetchRequest.fromRecord(
+      eventFetchRequestRecord,
+    );
+
     const producer = new DataProducer(eventFetchRequest);
     parentPort.on("message", async (message) => {
       switch (message.type) {
@@ -42,4 +51,7 @@ const run = () => {
   }
 };
 
-run();
+run().catch((e) => {
+  logger.error("Worker failed with:", e);
+  process.exit(1);
+});

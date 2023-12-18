@@ -6,9 +6,15 @@ export class Endpoint {
   record: EndpointRecord;
   provider: ApiProvider;
 
-  constructor(id: number) {
-    this.record = getEndpointRecordFromId(id);
-    this.provider = getProviderFromId(this.record.provider_id);
+  constructor(record: EndpointRecord, provider: ApiProvider) {
+    this.record = record;
+    this.provider = provider;
+  }
+
+  static async fromId(id: number) {
+    const record = await getEndpointRecordFromId(id);
+    const provider = await getProviderFromId(record.provider_id);
+    return new Endpoint(record, provider);
   }
 
   getId() {

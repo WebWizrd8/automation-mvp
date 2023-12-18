@@ -1,0 +1,242 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Express + TypeScript API",
+    "version": "1.0.0",
+    "description": "Documentation for Express + TypeScript Server"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain/chains": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/tags": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/tags/{chainId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "chainId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners/triggers/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners/trigger-with-actions/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners/trigger-with-actions": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Add a new trigger with actions",
+            "schema": {
+              "$ref": "#/definitions/EventFetchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Condition": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "example": "eq"
+        },
+        "value": {
+          "type": "string",
+          "example": "\"UP\""
+        },
+        "field": {
+          "type": "string",
+          "example": "$.\"direction\""
+        }
+      }
+    },
+    "Destination": {
+      "type": "object",
+      "properties": {
+        "destinationType": {
+          "type": "string",
+          "example": "telegram"
+        },
+        "destinationConfig": {
+          "type": "string",
+          "example": "{\"template\":\"ETH Price:\",\"telegramChatId\":\"6200972469\",\"telegramUserId\":\"LakshyaSky\"}"
+        }
+      }
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "test_user"
+        },
+        "name": {
+          "type": "string",
+          "example": "test_action"
+        },
+        "chainId": {
+          "type": "number",
+          "example": 2
+        },
+        "conditions": {
+          "type": "array",
+          "example": [
+            "Condition"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "destinations": {
+          "type": "array",
+          "example": [
+            "Destination"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "EventFetchRequest": {
+      "type": "object",
+      "properties": {
+        "eventFetchRequestId": {
+          "type": "number",
+          "example": 1
+        },
+        "functionName": {
+          "type": "string",
+          "example": "SPOT_PRICE_MATCH {% now 'unix', '' %}"
+        },
+        "functionArgs": {},
+        "addedBy": {
+          "type": "string",
+          "example": "test_user"
+        },
+        "actions": {
+          "type": "array",
+          "example": [
+            "Action"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

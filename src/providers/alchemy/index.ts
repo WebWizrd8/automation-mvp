@@ -19,10 +19,11 @@ export class AlchemyProviderWsApi extends ApiProvider {
   constructor(record: ProviderRecord) {
     super(record);
     this.record = record;
+    logger.debug(`Created AlchemyProviderWsApi`, this.record);
   }
 
   getUrl(chainId: number) {
-    if (chainId === 1) {
+    if (chainId === 2) {
       return `wss://eth-mainnet.g.alchemy.com/v2/${this.record.ws_token}`;
     } else {
       throw new Error(`Unknown chainId: ${chainId} for AlchemyProviderWsApi`);
@@ -43,6 +44,9 @@ export class AlchemyProviderWsApi extends ApiProvider {
       );
     }
     const { input } = apiInputData;
+    if (input === null) {
+      throw new Error(`Input is null for AlchemyProviderWsApi`);
+    }
     const subscribeInput = JSON.parse(input);
     logger.debug(`Creating fetcher for ${name}`);
     if (name === "newHeads") {

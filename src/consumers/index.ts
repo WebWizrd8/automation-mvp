@@ -24,7 +24,8 @@ export class DataConsumerWorkerManager {
     eventFetchRequestRecord: EventFetchRequestRecord,
   ): Promise<string> {
     logger.info(
-      `Creating consumer worker for trigger ${eventFetchRequestRecord}`,
+      `Creating consumer worker with following event data:`,
+      eventFetchRequestRecord,
     );
     const worker = new Worker("./dist/consumers/worker/index.js", {
       workerData: {
@@ -44,9 +45,6 @@ export class DataConsumerWorkerManager {
       eventFetchRequestRecord: eventFetchRequestRecord,
     };
     this.workers.set(id, workerDetails);
-    logger.info(
-      `Created consumer worker for trigger ${eventFetchRequestRecord}`,
-    );
     this.start(id);
     return id;
   }

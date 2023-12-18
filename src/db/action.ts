@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import dbClient from "../utils/db-client";
 
 export class ActionRecord {
   id: number;
@@ -14,22 +12,22 @@ export class ActionRecord {
   }
 }
 
-export const getActionFromId = (id: number) => {
-  return prisma.action.findUnique({
+export const getActionFromId = async (id: number) => {
+  return await dbClient.action.findUnique({
     where: {
       id,
     },
   });
 };
 
-export const getDestinationsForActions = async (alertId: number) => {
-  const alert_destinations = await prisma.action.findMany({
+export const getDestinationsForActions = async (actionId: number) => {
+  const action_destinations = await dbClient.action.findMany({
     where: {
-      id: alertId,
+      id: actionId,
     },
     include: {
       destination: true,
     },
   });
-  return alert_destinations;
+  return action_destinations;
 };

@@ -18,9 +18,10 @@ const run = () => {
     eventFetchRequestRecord,
     EventFetchRequestRecord.prototype,
   );
-  logger.info(`Consumer worker started for id: ${eventFetchRequestRecord}`);
+  logger.info(`Consumer worker started with data`, eventFetchRequestRecord);
   if (parentPort) {
     parentPort.on("message", async (message) => {
+      console.log("Message received", message);
       switch (message.type) {
         case "start":
           break;

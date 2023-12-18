@@ -1,8 +1,4 @@
 import { getDestinationsForActions } from "../db/action";
-import {
-  getDestinationPayloadForDiscord,
-  getDestinationPayloadForTelegram,
-} from "../db/destination";
 import { replaceTemplateValues } from "../templates";
 import bot from "../notifications/telegram";
 import {
@@ -34,32 +30,30 @@ export const handleAction = async (
     for (const destination of destinationRecords) {
       switch (destination.type) {
         case "telegram": {
-          const telegramPayload = await getDestinationPayloadForTelegram(
-            destination.id,
+          const telegramConfig = JSON.parse(
+            JSON.stringify(destination.destination_config),
           );
-          const { template, telegram_destination } = telegramPayload;
           const preparedResponse = replaceTemplateValues(
-            template,
+            telegramConfig.template,
             data,
             filter,
           );
           await bot.telegram.sendMessage(
-            telegram_destination.chat_id,
+            telegramConfig.telegramChatId,
             preparedResponse,
           );
           break;
         }
         case "discord": {
-          const discordPayload = await getDestinationPayloadForDiscord(
-            destination.id,
+          const discordConfig = JSON.parse(
+            JSON.stringify(destination.destination_config),
           );
-          const { template, discord_destination } = discordPayload;
           const preparedResponse = replaceTemplateValues(
-            template,
+            discordConfig.template,
             data,
             filter,
           );
-          const webhook = getWebhook(discord_destination.webhook_url);
+          const webhook = getWebhook(discordConfig.discordWebhookUrl);
           await sendWebhookMessage(webhook, preparedResponse);
           break;
         }
