@@ -6,9 +6,9 @@ import {
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
   EventFetchTagResponse,
-} from "app/models/event-fetch";
+} from "../models/event-fetch";
 import { getLogger } from "../../utils/logger";
-import { ActionConditionRecord } from "db/event";
+import { ActionConditionRecord } from "../../db/event";
 
 const logger = getLogger("event-fetch.service");
 

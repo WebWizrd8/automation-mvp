@@ -120,6 +120,9 @@ async function run() {
   const signers = await smartWallet.getAllActiveSigners();
   console.log("Smart wallet now has", signers.length, "active signers");
   console.log("------------------------------------");
+  // for (const signer of signers) {
+  //   console.log("Signer", signer);
+  // }
 
   const smartWalletSdk = await getSdk(smartWallet);
 
@@ -131,8 +134,25 @@ async function run() {
     encryption: false,
     strategy: "privateKey",
   });
+
+  const exportedKey = await sessionWallet.export({
+    strategy: "privateKey",
+    encryption: {
+      password: process.env.THIRDWEB_BACKEND_SK_PASSWORD!,
+    },
+  });
+  console.log("SK", exportedKey);
+
   const sessionKeyAddress = await sessionWallet.getAddress();
   console.log("SessionKeyAddress", sessionKeyAddress);
+  process.exit(0);
+  // const _ = await smartWallet.createSessionKey(sessionKeyAddress, {
+  //   approvedCallTargets: "*",
+  //   startDate: new Date(),
+  //   expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  // });
+
+  // await smartWallet.revokeSessionKey(sessionKeyAddress);
 
   const sessionSmartWallet = new SmartWallet(config);
   await sessionSmartWallet.connect({
@@ -144,6 +164,7 @@ async function run() {
 
   const inputAmount = ethers.utils.parseEther("1").toString();
   await swapUsingUniversalRouter(smartWalletSdk, inputAmount);
+  await sessionSmartWallet.disconnect();
 }
 
 const swapUsingUniversalRouter = async (

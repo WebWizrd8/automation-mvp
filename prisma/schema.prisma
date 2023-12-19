@@ -53,6 +53,7 @@ model alert_destination {
 enum action_type {
   discord
   telegram
+  onchain
   webhook
 }
 
