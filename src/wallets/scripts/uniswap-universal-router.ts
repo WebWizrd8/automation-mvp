@@ -5,9 +5,45 @@ import "dotenv/config";
 import { AbstractWallet, SmartWallet } from "@thirdweb-dev/wallets";
 import { Mumbai } from "@thirdweb-dev/chains";
 import { LocalWalletNode } from "@thirdweb-dev/wallets/evm/wallets/local-wallet-node";
-import { Token } from "@uniswap/sdk-core";
 import { ThirdwebSDK } from "@thirdweb-dev/sdk";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import {
+  SwapRouter,
+  UNIVERSAL_ROUTER_ADDRESS,
+  UniswapTrade,
+  SwapOptions,
+  PERMIT2_ADDRESS,
+} from "@uniswap/universal-router-sdk";
+import {
+  TradeType,
+  Token,
+  CurrencyAmount,
+  Currency,
+  Percent,
+  BigintIsh,
+  MaxUint256,
+} from "@uniswap/sdk-core";
+import { Trade as RouterTrade } from "@uniswap/router-sdk";
+import {
+  Pool,
+  FeeAmount,
+  Trade as V3Trade,
+  Route as RouteV3,
+  TickMath,
+  TICK_SPACINGS,
+  nearestUsableTick,
+} from "@uniswap/v3-sdk";
+import IUniswapV3Pool from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
+import JSBI from "jsbi";
+import { randomBytes } from "ethers/lib/utils";
+import {
+  AllowanceTransfer,
+  MaxUint160,
+  PermitSingle,
+  PermitTransferFrom,
+  SignatureTransfer,
+} from "@uniswap/permit2-sdk";
+import { Permit2Permit } from "@uniswap/universal-router-sdk/dist/utils/inputTokens";
 
 const chain = Mumbai;
 
@@ -85,8 +121,7 @@ async function run() {
   console.log("Smart wallet now has", signers.length, "active signers");
   console.log("------------------------------------");
 
-  const sdk = await getSdk(smartWallet);
-  await mintWMatic(sdk, "0.1");
+  const smartWalletSdk = await getSdk(smartWallet);
 
   //This wallet will act as out backend server wallet
   const sessionWallet = new LocalWalletNode({
@@ -104,31 +139,253 @@ async function run() {
     personalWallet: sessionWallet,
     accountAddress: await smartWallet.getAddress(),
   });
-  const sessionSdk = await getSdk(sessionSmartWallet);
-  await mintWMatic(sessionSdk, "0.1");
+
+  // const sessionSdk = await getSdk(sessionSmartWallet);
+
+  const inputAmount = ethers.utils.parseEther("1").toString();
+  await swapUsingUniversalRouter(smartWalletSdk, inputAmount);
 }
 
-const mintWMatic = async (sdk: ThirdwebSDK, amount: string) => {
-  const wMaticContract = await sdk.getContract(WMATIC.address);
-  const txDeposit = wMaticContract.prepare("deposit", [], {
-    value: ethers.utils.parseEther(amount),
+const swapUsingUniversalRouter = async (
+  sdk: ThirdwebSDK,
+  inputAmount: string,
+) => {
+  const sdkWalletAddress = await sdk.wallet.getAddress();
+  console.log(
+    "Uniswap Universal Router Address",
+    UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
+  );
+
+  console.log("Allowing Universal Router to spend WMATIC");
+
+  const { signature: permitSignature, permit } = await approveToken(
+    sdk,
+    WMATIC.address,
+    ethers.constants.MaxUint256.toString(),
+    PERMIT2_ADDRESS,
+    UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
+  );
+
+  console.log("Permit Signature", permitSignature, permit);
+
+  const WMATIC_USDC = await getPool(sdk, WMATIC, USDC, FeeAmount.HIGH);
+
+  const trade = await V3Trade.fromRoute(
+    new RouteV3([WMATIC_USDC], WMATIC, USDC),
+    CurrencyAmount.fromRawAmount(WMATIC, inputAmount),
+    TradeType.EXACT_INPUT,
+  );
+  const routerTrade = buildTrade([trade]);
+  const opts = swapOptions({
+    recipient: sdkWalletAddress,
+    inputTokenPermit: toInputPermit(permitSignature, permit),
   });
-  const txReceipt = await txDeposit.send();
-  // const rawTx = await txApprove.populateTransaction();
-  // console.log("txPrepared", rawTx);
-  // const txReceipt = await sdk.wallet.sendRawTransaction(rawTx);
-  await txReceipt.wait(2);
-  console.log("txReceipt", txReceipt);
+
+  console.log("UniswapTrade", new UniswapTrade(routerTrade, opts));
+
+  const params = SwapRouter.swapCallParameters(
+    new UniswapTrade(routerTrade, opts),
+  );
+
+  console.log("params", params);
+
+  console.log("Smart Wallet Balance for Token", WMATIC_USDC.token0.symbol);
+  await balance(sdk, WMATIC_USDC.token0.address);
+  console.log("Smart Wallet Balance for Token", WMATIC_USDC.token1.symbol);
+  await balance(sdk, WMATIC_USDC.token1.address);
+
+  console.log("Sending transaction");
+
+  const tx = await sdk.wallet.sendRawTransaction({
+    data: params.calldata,
+    to: UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
+    value: params.value,
+    from: await sdk.wallet.getAddress(),
+    gasLimit: BigNumber.from("1957840"),
+  });
+  console.log("Transaction sent, waiting for confirmations", tx);
+  await tx.wait(1);
+
+  console.log("Smart Wallet Balance for Token", WMATIC_USDC.token0.symbol);
+  await balance(sdk, WMATIC_USDC.token0.address);
+  console.log("Smart Wallet Balance for Token", WMATIC_USDC.token1.symbol);
+  await balance(sdk, WMATIC_USDC.token1.address);
 };
 
-// async function transfer(
-//   sdk: ThirdwebSDK,
-//   amount: string,
-//   to: string,
-//   token?: string,
-// ) {
-//   const txTrnsfr = await sdk.wallet.transfer(to, amount, token);
-//   console.log(`Transfered ${amount} to ${to}`, txTrnsfr);
-// }
+const approveToken = async (
+  sdk: ThirdwebSDK,
+  token: string,
+  amount: string,
+  permit2Address: string,
+  universalRouterAddress: string,
+) => {
+  // console.log("Approving token allowance for", permit2Address);
+  // const erc20Contract = await sdk.getContract(token);
+  // const txDeposit = erc20Contract.prepare("approve", [permit2Address, amount]);
+  // const txSent = await txDeposit.send();
+  // // const rawTx = await txApprove.populateTransaction();
+  // // console.log("txPrepared", rawTx);
+  // // const txReceipt = await sdk.wallet.sendRawTransaction(rawTx);
+  // await txSent.wait(2);
+  // console.log("Tx Receipt for tokenApproval", txSent);
+  // const allowance = await erc20Contract.call("allowance", [
+  //   await sdk.wallet.getAddress(),
+  //   permit2Address,
+  // ]);
+  // console.log(`Allowance for ${permit2Address}`, allowance);
+
+  const p2Contract = await sdk.getContract(permit2Address);
+  const [p2Amount, p2Expiration, p2Nonce]: [BigNumber, number, number] =
+    await p2Contract.call("allowance", [
+      await sdk.wallet.getAddress(),
+      WMATIC.address,
+      universalRouterAddress,
+    ]);
+  console.log("P2 Amount, Expiration, Nonce", p2Amount, p2Expiration, p2Nonce);
+
+  const permit: PermitSingle = {
+    details: {
+      token,
+      amount: MaxUint160,
+      expiration: "3000000000000",
+      nonce: p2Nonce,
+    },
+    spender: universalRouterAddress,
+    sigDeadline: "3000000000000",
+  };
+
+  const signature = await generateEip2098PermitSignature(
+    permit,
+    sdk,
+    chain.chainId,
+    permit2Address,
+  );
+  return { signature, permit };
+};
+
+export async function generatePermitSignature(
+  permit: PermitSingle,
+  sdk: ThirdwebSDK,
+  chainId: number,
+  permitAddress: string = PERMIT2_ADDRESS,
+): Promise<string> {
+  const { domain, types, values } = AllowanceTransfer.getPermitData(
+    permit,
+    permitAddress,
+    chainId,
+  );
+  //eslint-disable-next-line
+  return (await sdk.wallet.signTypedData(domain as any, types, values)).signature;
+}
+
+export async function generateEip2098PermitSignature(
+  permit: PermitSingle,
+  sdk: ThirdwebSDK,
+  chainId: number,
+  permitAddress: string = PERMIT2_ADDRESS,
+): Promise<string> {
+  const sig = await generatePermitSignature(
+    permit,
+    sdk,
+    chainId,
+    permitAddress,
+  );
+  const split = ethers.utils.splitSignature(sig);
+  return split.compact;
+}
+
+export function toInputPermit(
+  signature: string,
+  permit: PermitSingle,
+): Permit2Permit {
+  return {
+    ...permit,
+    signature,
+  };
+}
+
+const getPool = async (
+  sdk: ThirdwebSDK,
+  tokenA: Token,
+  tokenB: Token,
+  feeAmount: FeeAmount,
+) => {
+  const [token0, token1] = tokenA.sortsBefore(tokenB)
+    ? [tokenA, tokenB]
+    : [tokenB, tokenA];
+  const poolAddress = Pool.getAddress(token0, token1, feeAmount);
+  const poolContract = await sdk.getContract(poolAddress, IUniswapV3Pool.abi);
+  const slot0 = await poolContract.call("slot0");
+  const [sqrtPriceX96, tick]: [BigintIsh, number] = slot0;
+  const liquidity: BigintIsh = await poolContract.call("liquidity");
+  const pool = new Pool(
+    token0,
+    token1,
+    feeAmount,
+    sqrtPriceX96,
+    liquidity,
+    tick,
+    [
+      {
+        index: nearestUsableTick(TickMath.MIN_TICK, TICK_SPACINGS[feeAmount]),
+        liquidityNet: liquidity,
+        liquidityGross: liquidity,
+      },
+      {
+        index: nearestUsableTick(TickMath.MAX_TICK, TICK_SPACINGS[feeAmount]),
+        liquidityNet: JSBI.multiply(
+          JSBI.BigInt(liquidity.toString()),
+          JSBI.BigInt("-1"),
+        ),
+        liquidityGross: liquidity,
+      },
+    ],
+  );
+  return pool;
+};
+
+function buildTrade(trades: V3Trade<Currency, Currency, TradeType>[]) {
+  const routes = trades
+    .filter((trade) => trade instanceof V3Trade)
+    .flatMap((trade) => {
+      const s = trade.swaps.map((swap) => {
+        return {
+          routev3: swap.route,
+          inputAmount: swap.inputAmount,
+          outputAmount: swap.outputAmount,
+        };
+      });
+      return s;
+    });
+  return new RouterTrade({
+    v2Routes: [],
+    v3Routes: routes,
+    mixedRoutes: [],
+    tradeType: TradeType.EXACT_INPUT,
+  });
+}
+
+function swapOptions(options: Partial<SwapOptions>): SwapOptions {
+  return Object.assign(
+    {
+      slippageTolerance: new Percent(5, 100),
+    },
+    options,
+  );
+}
+
+// const trade = await V3Trade.fromRoute(
+//   new RouteV3([poolAddress], tokenA, tokenB),
+//   CurrencyAmount.fromRawAmount(tokenA, "1000000000000000000"),
+//   TradeType.EXACT_INPUT,
+// );
+
+async function balance(sdk: ThirdwebSDK, token: string) {
+  const contract = await sdk.getContract(token);
+  const balance: BigNumber = await contract.call("balanceOf", [
+    await sdk.wallet.getAddress(),
+  ]);
+  JSBI.BigInt(balance.toString());
+}
 
 run().catch(console.error);
