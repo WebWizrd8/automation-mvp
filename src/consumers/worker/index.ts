@@ -13,6 +13,7 @@ export interface ConsumerWorkerData {
 const logger = getLogger("consumer_worker");
 
 const run = () => {
+  let messageCount = 0;
   const { eventFetchRequestRecord }: ConsumerWorkerData = workerData;
   Object.setPrototypeOf(
     eventFetchRequestRecord,
@@ -26,7 +27,16 @@ const run = () => {
         case "start":
           break;
         case "message":
-          logger.info("Received message from producer", message.message);
+          messageCount++;
+          if (messageCount === 1) {
+            //First message is ack from defined.fi for subscription, which we ignore
+            logger.info("Received first message from producer, ignoring");
+            break;
+          }
+          logger.info(
+            `Received message (${messageCount}) from producer`,
+            message.message,
+          );
 
           // Find all alerts that are interested in this message
           try {
