@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, action_type } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import dbClient from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
@@ -234,52 +234,83 @@ export class EventFetchRequestFunctionService {
 
     logger.info("Creating event fetch request trigger function", eventData);
 
-    await this.client.$transaction(async (tx) => {
-      const event = await tx.event_fetch_request_trigger_function.create({
-        data: {
-          ...eventData,
-        },
-      });
-
-      for (const action of data.actions) {
-        const actionsResp = await tx.action.create({
+    try {
+      await this.client.$transaction(async (tx) => {
+        const event = await tx.event_fetch_request_trigger_function.create({
           data: {
-            name: action.name,
-            chain_id: action.chainId,
-            user_id: action.userId,
-            event_fetch_request_trigger_function_id: event.id,
+            ...eventData,
           },
         });
 
-        for (const condition of action.conditions) {
-          const t = {
-            operator: condition.operator,
-            value: condition.value,
-            field: condition.field,
-            action_id: actionsResp.id,
-          };
+        for (const action of data.actions) {
+          const loopRules = prepareLoopRules(action);
+          const actionsResp = await tx.action.create({
+            data: {
+              name: action.name,
+              chain_id: action.chainId,
+              user_id: action.userId,
+              event_fetch_request_trigger_function_id: event.id,
+              executed: 0,
+              last_executed_at: null,
+              loop: loopRules.loop,
+              loop_config: loopRules.loopConfig
+                ? JSON.parse(loopRules.loopConfig)
+                : null,
+            },
+          });
 
-          const sql = Prisma.sql`INSERT INTO "action_condition" ("operator","value","field","action_id") VALUES (${t.operator}, CAST(${t.value}::text AS jsonb), CAST(${t.field}::text as jsonpath), ${t.action_id})`;
-
-          try {
-            const actionConditionRecord = await tx.$executeRaw(sql);
-            logger.info("Inserted action condition", actionConditionRecord);
-          } catch (e) {
-            logger.error("Error inserting action condition", e);
-            throw e;
-          }
-        }
-
-        await tx.destination.createMany({
-          data: action.destinations.map((destination) => {
-            return {
+          for (const condition of action.conditions) {
+            const t = {
+              operator: condition.operator,
+              value: condition.value,
+              field: condition.field,
               action_id: actionsResp.id,
-              type: destination.destinationType,
-              destination_config: JSON.parse(destination.destinationConfig),
             };
-          }),
-        });
-      }
-    });
+
+            const sql = Prisma.sql`INSERT INTO "action_condition" ("operator","value","field","action_id") VALUES (${t.operator}, CAST(${t.value}::text AS jsonb), CAST(${t.field}::text as jsonpath), ${t.action_id})`;
+
+            try {
+              const actionConditionRecord = await tx.$executeRaw(sql);
+              logger.info("Inserted action condition", actionConditionRecord);
+            } catch (e) {
+              logger.error("Error inserting action condition", e);
+              throw e;
+            }
+          }
+
+          await tx.destination.createMany({
+            data: action.destinations.map((destination) => {
+              return {
+                action_id: actionsResp.id,
+                type: destination.destinationType,
+                destination_config: JSON.parse(destination.destinationConfig),
+              };
+            }),
+          });
+        }
+      });
+    } catch (e) {
+      logger.error("Error inserting action", e);
+      throw e;
+    }
   }
+}
+
+function prepareLoopRules(action: {
+  loopRules?: EventFetchRequestTriggerWithConditionsRequest["actions"][0]["loopRules"];
+}) {
+  const loopRules: { loop: boolean; loopConfig: string | null } = {
+    loop: false,
+    loopConfig: null,
+  };
+  if (action.loopRules) {
+    loopRules.loop = action.loopRules.loop;
+    const maxExecutions = action.loopRules.maxExecutions;
+    const loopConfig: { max_executions?: number } = {};
+    if (maxExecutions) {
+      loopConfig.max_executions = maxExecutions;
+    }
+    loopRules.loopConfig = JSON.stringify(loopConfig);
+  }
+  return loopRules;
 }

@@ -11,6 +11,11 @@ export interface ActionConditionRecord {
   field: string;
 }
 
+export enum EventTagName {
+  GET_NEW_BLOCKS = "GET_NEW_BLOCKS",
+  GET_SPOT_PRICE = "GET_SPOT_PRICE",
+}
+
 export class EventTagRecord {
   id: number;
   name: string;
@@ -88,7 +93,58 @@ export class EventFetchRequestRecord {
   }
 }
 
-//TODO: This values should come from `db.event_fetch_request`.
+export async function getAllEventFetchRequestRecordsForTag(
+  tagName: EventTagName,
+): Promise<EventFetchRequestRecord[]> {
+  try {
+    const dbRecords = await dbClient.event_fetch_request.findMany({
+      where: {
+        tag: {
+          name: tagName,
+        },
+      },
+    });
+    const eventFetchRequestRecords = dbRecords.map((dbRecord) => {
+      return new EventFetchRequestRecord({
+        id: dbRecord.id,
+        tag_id: dbRecord.tag_id,
+        chain_id: dbRecord.chain_id,
+        payload: dbRecord.payload ? JSON.stringify(dbRecord.payload) : null,
+        added_by: dbRecord.added_by,
+        createdAt: dbRecord.createdAt,
+        updatedAt: dbRecord.updatedAt,
+      });
+    });
+    return eventFetchRequestRecords;
+  } catch (e) {
+    logger.error(`Error getting all event fetch request records`, e);
+    throw e;
+  }
+}
+
+export async function getAllEventFetchRequestRecords(): Promise<
+  EventFetchRequestRecord[]
+> {
+  try {
+    const dbRecords = await dbClient.event_fetch_request.findMany();
+    const eventFetchRequestRecords = dbRecords.map((dbRecord) => {
+      return new EventFetchRequestRecord({
+        id: dbRecord.id,
+        tag_id: dbRecord.tag_id,
+        chain_id: dbRecord.chain_id,
+        payload: dbRecord.payload ? JSON.stringify(dbRecord.payload) : null,
+        added_by: dbRecord.added_by,
+        createdAt: dbRecord.createdAt,
+        updatedAt: dbRecord.updatedAt,
+      });
+    });
+    return eventFetchRequestRecords;
+  } catch (e) {
+    logger.error(`Error getting all event fetch request records`, e);
+    throw e;
+  }
+}
+
 export async function getEventFetchRequestRecordFromId(
   id: number,
 ): Promise<EventFetchRequestRecord> {

@@ -54,36 +54,13 @@ export function toInputPermit(
   };
 }
 
-export async function approveToken(
+export async function preparePermit2(
   sdk: ThirdwebSDK,
   token: string,
-  amount: string,
   permit2Address: string,
   universalRouterAddress: string,
   chainId: number,
 ) {
-  logger.debug("Approving token allowance for", permit2Address);
-  const erc20Contract = await sdk.getContract(token);
-
-  const allowance: BigNumber = await erc20Contract.call("allowance", [
-    await sdk.wallet.getAddress(),
-    permit2Address,
-  ]);
-  logger.debug(`Allowance for ${permit2Address}`, allowance);
-  if (!allowance.gte(amount)) {
-    logger.debug(`Approving token allowance for ${permit2Address}`);
-    const txApprove = erc20Contract.prepare("approve", [
-      permit2Address,
-      amount,
-    ]);
-    const txSent = await txApprove.send();
-    // // const rawTx = await txApprove.populateTransaction();
-    // // logger.debug("txPrepared", rawTx);
-    // // const txReceipt = await sdk.wallet.sendRawTransaction(rawTx);
-    await txSent.wait(1);
-    logger.debug("Tx Receipt for tokenApproval", txSent);
-  }
-
   const p2Contract = await sdk.getContract(permit2Address);
   const [p2Amount, p2Expiration, p2Nonce]: [BigNumber, number, number] =
     await p2Contract.call("allowance", [
@@ -113,4 +90,35 @@ export async function approveToken(
     permit2Address,
   );
   return { signature, permit };
+}
+
+export async function approveToken(
+  sdk: ThirdwebSDK,
+  token: string,
+  amount: string,
+  permit2Address: string,
+) {
+  logger.debug(
+    `Approving ${amount.toString()} ${token} to spend permit ${permit2Address}`,
+  );
+  const erc20Contract = await sdk.getContract(token);
+
+  const allowance: BigNumber = await erc20Contract.call("allowance", [
+    await sdk.wallet.getAddress(),
+    permit2Address,
+  ]);
+  logger.debug(`Allowance for ${permit2Address}:  ${allowance.toString()}`);
+  if (!allowance.gte(amount)) {
+    logger.debug(`Approving token allowance for ${permit2Address}`);
+    const txApprove = erc20Contract.prepare("approve", [
+      permit2Address,
+      amount,
+    ]);
+    // const txSent = await txApprove.send();
+    const rawTx = await txApprove.populateTransaction();
+    logger.debug("txPrepared", rawTx);
+    const txSent = await sdk.wallet.sendRawTransaction(rawTx);
+    await txSent.wait(1);
+    logger.debug("Tx Receipt for tokenApproval", txSent);
+  }
 }

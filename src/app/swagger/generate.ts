@@ -29,6 +29,11 @@ const swaggerOptions = {
       chainId: 2,
       conditions: ["Condition"],
       destinations: ["Destination"],
+      loopRules: "LoopRules",
+    },
+    LoopRules: {
+      loop: false,
+      loopConfig: '{"maxExecutions": 5}',
     },
     EventFetchRequest: {
       eventFetchRequestId: 1,

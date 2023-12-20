@@ -8,26 +8,9 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model alert {
-  id       Int    @id @default(autoincrement())
-  user_id  String
-  chain_id Int
-  name     String
-  chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model alert_condition {
-  id       Int                     @id @default(autoincrement())
-  alert_id Int
-  field    Unsupported("jsonpath")
-  operator String
-  value    Json
-}
-
 model chain {
   id                  Int                   @id @default(autoincrement())
   name                String
-  alert               alert[]
   chain_endpoint      chain_endpoint[]
   provider_chain      provider_chain[]
   event_tag_chain     event_tag_chain[]
@@ -41,13 +24,6 @@ model chain_endpoint {
   type     String
   url      String
   chain    chain  @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model alert_destination {
-  id             Int         @id @default(autoincrement())
-  alert_id       Int
-  destination_id Int
-  destination    destination @relation(fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum action_type {
@@ -159,6 +135,10 @@ model action {
   destination                             destination[]
   action_condition                        action_condition[]
   event_fetch_request_trigger_function    event_fetch_request_trigger_function @relation(fields: [event_fetch_request_trigger_function_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  executed                                Int                                  @default(0)
+  last_executed_at                        DateTime?                           @default(now())
+  loop                                    Boolean                              @default(false)
+  loop_config                             Json?
 }
 
 model action_condition {
@@ -171,12 +151,11 @@ model action_condition {
 }
 
 model destination {
-  id                 Int                 @id @default(autoincrement())
+  id                 Int         @id @default(autoincrement())
   action_id          Int
   type               action_type
-  alert_destination  alert_destination[]
-  action             action              @relation(fields: [action_id], references: [id])
   destination_config Json
+  action             action      @relation(fields: [action_id], references: [id])
 }
 
 // model discord_destination {

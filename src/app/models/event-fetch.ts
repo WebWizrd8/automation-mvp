@@ -1,5 +1,4 @@
 import { action_type } from "@prisma/client";
-import { z } from "zod";
 
 export interface EventFetchTagResponse {
   id: number;
@@ -68,5 +67,9 @@ export interface EventFetchRequestTriggerWithConditionsRequest
       destinationType: action_type;
       destinationConfig: string;
     }[];
+    loopRules?: {
+      loop: boolean;
+      maxExecutions?: number;
+    };
   }[];
 }

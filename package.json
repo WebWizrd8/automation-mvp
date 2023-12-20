@@ -6,8 +6,9 @@
   "scripts": {
     "swagger:generate": "npx ts-node ./src/app/swagger/generate.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "NODE_ENV=production node dist/server.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/server.js\"",
+    "dev:run": "nodemon -q dist/server.js",
     "kill": "./scripts/kill.sh \"node dist/index.js\"",
     "test": "jest",
     "lint": "tsc --noEmit && eslint . ",
