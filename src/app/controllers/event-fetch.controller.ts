@@ -48,12 +48,9 @@ export async function getEventFetchRequestFunctionById(
   res.send(event);
 }
 
-export async function getEventFetchRequestFunctions(
-  _req: Request,
-  res: Response,
-) {
+export function getEventFetchRequestFunctions(_req: Request, res: Response) {
   const event =
-    await eventFetchRequestFunctionService.getAllEventFetchRequestFunctions();
+    eventFetchRequestFunctionService.getAllEventFetchRequestFunctions();
   res.send(event);
 }
 

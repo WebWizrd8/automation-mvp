@@ -8,6 +8,7 @@ import {
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
   EventFetchTagResponse,
+  getConditionsForFunctionName,
 } from "../models/event-fetch";
 import { getLogger } from "../../utils/logger";
 import { ActionConditionRecord } from "../../db/event";
@@ -144,8 +145,15 @@ export class EventFetchRequestFunctionService {
     };
   }
 
-  getAllEventFetchRequestFunctions(): string[] {
-    return Object.values(EventFetchRequestTriggerFunctionName);
+  getAllEventFetchRequestFunctions(): Record<string, unknown> {
+    const fnNames = Object.values(EventFetchRequestTriggerFunctionName);
+    const fnNamesWithConditions: Record<string, unknown> = {};
+
+    for (const fnName of fnNames) {
+      const conditions = getConditionsForFunctionName(fnName);
+      fnNamesWithConditions[fnName] = conditions;
+    }
+    return fnNamesWithConditions;
   }
 
   async getEventFetchRequestFunctionForIdWithActions(

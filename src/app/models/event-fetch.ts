@@ -55,6 +55,108 @@ export enum EventFetchRequestTriggerFunctionName {
   MA_BELOW = "MA_BELOW",
 }
 
+export function getConditionsForFunctionName(functionName: string) {
+  switch (functionName) {
+    case EventFetchRequestTriggerFunctionName.SPOT_PRICE_MATCH:
+      return [
+        {
+          operator: "eq",
+          value: "2",
+          field: '$."chain_id"',
+        },
+        {
+          operator: "gte",
+          value: "2020",
+          field: '$."priceUsd"',
+        },
+        {
+          operator: "eq",
+          value: '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"',
+          field: '$."token_address"',
+        },
+      ];
+    case EventFetchRequestTriggerFunctionName.SPOT_PRICE_INCREASE:
+      return [
+        {
+          operator: "eq",
+          value: "2",
+          field: '$."chain_id"',
+        },
+        {
+          operator: "eq",
+          value: '"30D"',
+          field: '$."duration"',
+        },
+        {
+          operator: "gte",
+          value: "3",
+          field: '$."change_percentage"',
+        },
+        {
+          operator: "eq",
+          value: '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"',
+          field: '$."token_address"',
+        },
+      ];
+    case EventFetchRequestTriggerFunctionName.SPOT_PRICE_DECREASE:
+      return [
+        {
+          operator: "eq",
+          value: "2",
+          field: '$."chain_id"',
+        },
+        {
+          operator: "eq",
+          value: '"30D"',
+          field: '$."duration"',
+        },
+        {
+          operator: "lte",
+          value: "-300",
+          field: '$."changeUsd"',
+        },
+        {
+          operator: "eq",
+          value: '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"',
+          field: '$."token_address"',
+        },
+      ];
+    case EventFetchRequestTriggerFunctionName.MA_ABOVE:
+      return [
+        {
+          operator: "GREATER_THAN",
+          value: "100",
+          field: "spotPrice",
+        },
+      ];
+    case EventFetchRequestTriggerFunctionName.MA_BELOW:
+      return [
+        {
+          operator: "eq",
+          value: "2",
+          field: '$."chain_id"',
+        },
+        {
+          operator: "eq",
+          value: '"30D"',
+          field: '$."duration"',
+        },
+        {
+          operator: "lte",
+          value: "3",
+          field: '$."moving_average"',
+        },
+        {
+          operator: "eq",
+          value: '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"',
+          field: '$."token_address"',
+        },
+      ];
+    default:
+      return [];
+  }
+}
+
 // export interface EventFetchRequestTriggerRequest {
 //   eventFetchRequestId: number;
 //   //functionName should be one of the function names in the enum
