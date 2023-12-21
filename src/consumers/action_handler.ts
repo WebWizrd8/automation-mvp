@@ -1,4 +1,4 @@
-import { getDestinationsForActions } from "../db/action";
+import { getDestinationsForActions, markActionAsExecuted } from "../db/action";
 import { replaceTemplateValues } from "../templates";
 import bot from "../notifications/telegram";
 import {
@@ -9,6 +9,12 @@ import { getBackendWallet, getChain, getSdk } from "../onchain/utils";
 import { swapUsingUniversalRouter } from "../onchain/uniswap";
 import { ethers } from "ethers";
 import { getToken } from "../onchain/tokens";
+import { Prisma } from "@prisma/client";
+import { getLogger } from "../utils/logger";
+import { approveToken } from "../onchain/uniswap/permits";
+import { MaxUint160, PERMIT2_ADDRESS } from "@uniswap/permit2-sdk";
+
+const logger = getLogger("consumer/woker/action_handler");
 
 export const handleActions = async (
   actionIds: number[],
@@ -17,8 +23,7 @@ export const handleActions = async (
 ) => {
   for (const actionId of actionIds) {
     await handleAction(actionId, data, filter);
-    //TODO: remove this break after onchain actions are fully implemented
-    break;
+    await markActionAsExecuted(actionId);
   }
 };
 
@@ -34,7 +39,7 @@ export const handleAction = async (
   for (const actionRecord of actionRecords) {
     const { destination } = actionRecord;
     const destinationRecords = destination.map((destination) => {
-      return { ...destination, type: (destination.type = "onchain") };
+      return { ...destination };
     });
     for (const destination of destinationRecords) {
       switch (destination.type) {
@@ -67,34 +72,7 @@ export const handleAction = async (
           break;
         }
         case "onchain": {
-          console.log("onchain");
-          //TODO: approve transfer of tokens for this address to permit2
-          //TODO: create session key for this address
-          const accountAddress = "0x7780CcB62782b58c34A51837097B3BD2BD2c4416";
-          const chainId = 80001;
-          const inTokenSymbol = "USDC";
-          const outTokenSymbol = "WETH";
-          const amount = "1";
-          const decimals = 6;
-
-          const chain = getChain(chainId);
-          const backendWallet = await getBackendWallet(chain, accountAddress);
-          const sdk = await getSdk(backendWallet, chain);
-          const inputAmount = ethers.utils
-            .parseUnits(amount, decimals)
-            .toString();
-          const inToken = getToken(inTokenSymbol, chain.chainId);
-          const outToken = getToken(outTokenSymbol, chain.chainId);
-          if (!inToken || !outToken) {
-            throw new Error("Token not found");
-          }
-          console.log("Swapping", inputAmount, inToken, outToken);
-          await swapUsingUniversalRouter(sdk, {
-            chainId,
-            inputAmount,
-            input: inToken,
-            output: outToken,
-          });
+          await handleOnchainAction(destination);
           break;
         }
         case "webhook":
@@ -103,9 +81,69 @@ export const handleAction = async (
         default:
           throw new Error(`Unknown destination type ${destination.type}`);
       }
-      //TODO: remove this break after onchain actions are fully implemented
-      break;
     }
   }
   console.log(actionRecords);
 };
+
+async function handleOnchainAction(
+  destination: Partial<{
+    type: string;
+    destination_config: Prisma.JsonValue;
+  }>,
+) {
+  console.log("onchain");
+  //TODO: approve transfer of tokens for this address to permit2
+  //TODO: create session key for this address
+  // const accountAddress = "0x7780CcB62782b58c34A51837097B3BD2BD2c4416";
+  // const chainId = 80001;
+  // const inTokenSymbol = "USDC";
+  // const outTokenSymbol = "WETH";
+  // const amount = "1";
+
+  const txnDestinationConfig = JSON.parse(
+    JSON.stringify(destination.destination_config),
+  );
+
+  logger.debug("txnDestinationConfig", txnDestinationConfig);
+
+  switch (txnDestinationConfig.txnType) {
+    case "UNISWAP_V3_TRADE": {
+      const { accountAddress, chainId, inTokenSymbol, outTokenSymbol, amount } =
+        txnDestinationConfig;
+      const chain = getChain(chainId);
+      const backendWallet = await getBackendWallet(chain, accountAddress);
+      const sdk = await getSdk(backendWallet, chain);
+      const inToken = getToken(inTokenSymbol, chain.chainId);
+      const outToken = getToken(outTokenSymbol, chain.chainId);
+      if (!inToken || !outToken) {
+        throw new Error("Token not found");
+      }
+      const inputAmount = ethers.utils
+        .parseUnits(amount.toString(), inToken.decimals)
+        .toString();
+      await approveToken(
+        sdk,
+        inToken.address,
+        MaxUint160.toString(),
+        PERMIT2_ADDRESS,
+      );
+
+      logger.debug(
+        `Swapping ${inputAmount} ${inToken.address} for ${outToken.address}`,
+      );
+
+      await swapUsingUniversalRouter(sdk, {
+        chainId,
+        inputAmount,
+        input: inToken,
+        output: outToken,
+      });
+
+      break;
+    }
+    default: {
+      throw new Error(`Unknown txn type ${txnDestinationConfig.txnType}`);
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { find_matching_actions } from "../../db/functions";
-import { handleActions } from "../alert_handler";
+import { handleActions } from "../action_handler";
 import {
   EventFetchRequestRecord,
   getEventFetchRequestFunctionFromFetchRequestId,
@@ -55,9 +55,9 @@ async function handleSpotPriceEvent(
         eventFetchRequestFunctionRecord.function_name === "SPOT_PRICE_MATCH"
       ) {
         const filter = message;
-        const alerts = await find_matching_actions(filter);
-        logger.info("Alerts found", alerts);
-        if (alerts) await handleActions(alerts, message, filter);
+        const actions = await find_matching_actions(filter);
+        logger.info("Alerts found", actions);
+        if (actions) await handleActions(actions, message, filter);
       } else if (
         eventFetchRequestFunctionRecord.function_name === "SPOT_PRICE_CHANGE"
       ) {
@@ -147,9 +147,9 @@ async function handleSpotPriceEvent(
 
         //For each filter, find matching alerts
         for (const filter of filters) {
-          const alerts = await find_matching_actions(filter);
-          logger.info("Alerts found", alerts);
-          if (alerts) await handleActions(alerts, message, filter);
+          const actions = await find_matching_actions(filter);
+          logger.info("Alerts found", actions);
+          if (actions) await handleActions(actions, message, filter);
         }
       }
     }

@@ -1,11 +1,5 @@
 -- DropForeignKey
-ALTER TABLE "alert" DROP CONSTRAINT "alert_chain_id_fkey";
-
--- DropForeignKey
 ALTER TABLE "chain_endpoint" DROP CONSTRAINT "chain_endpoint_chain_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "alert_destination" DROP CONSTRAINT "alert_destination_destination_id_fkey";
 
 -- DropForeignKey
 ALTER TABLE "provider_chain" DROP CONSTRAINT "provider_chain_provider_id_fkey";
@@ -47,19 +41,10 @@ ALTER TABLE "action_condition" DROP CONSTRAINT "action_condition_action_id_fkey"
 ALTER TABLE "destination" DROP CONSTRAINT "destination_action_id_fkey";
 
 -- DropTable
-DROP TABLE "alert";
-
--- DropTable
-DROP TABLE "alert_condition";
-
--- DropTable
 DROP TABLE "chain";
 
 -- DropTable
 DROP TABLE "chain_endpoint";
-
--- DropTable
-DROP TABLE "alert_destination";
 
 -- DropTable
 DROP TABLE "provider";

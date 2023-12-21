@@ -21,7 +21,6 @@ import {
   Currency,
   Percent,
   BigintIsh,
-  MaxUint256,
 } from "@uniswap/sdk-core";
 import { Trade as RouterTrade } from "@uniswap/router-sdk";
 import {
@@ -35,13 +34,10 @@ import {
 } from "@uniswap/v3-sdk";
 import IUniswapV3Pool from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import JSBI from "jsbi";
-import { randomBytes } from "ethers/lib/utils";
 import {
   AllowanceTransfer,
   MaxUint160,
   PermitSingle,
-  PermitTransferFrom,
-  SignatureTransfer,
 } from "@uniswap/permit2-sdk";
 import { Permit2Permit } from "@uniswap/universal-router-sdk/dist/utils/inputTokens";
 
@@ -55,13 +51,13 @@ const WMATIC = new Token(
   "Wrapped Matic",
 );
 
-const WETH = new Token(
-  chain.chainId,
-  "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
-  18,
-  "WETH",
-  "Wrapped Ether",
-);
+// const WETH = new Token(
+//   chain.chainId,
+//   "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+//   18,
+//   "WETH",
+//   "Wrapped Ether",
+// );
 
 const USDC = new Token(
   chain.chainId,

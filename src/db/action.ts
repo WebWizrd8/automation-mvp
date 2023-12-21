@@ -31,3 +31,18 @@ export const getDestinationsForActions = async (actionId: number) => {
   });
   return action_destinations;
 };
+
+//Increament the number of times an action has been executed
+export const markActionAsExecuted = async (actionId: number) => {
+  await dbClient.action.update({
+    where: {
+      id: actionId,
+    },
+    data: {
+      executed: {
+        increment: 1,
+      },
+      last_executed_at: new Date(),
+    },
+  });
+};

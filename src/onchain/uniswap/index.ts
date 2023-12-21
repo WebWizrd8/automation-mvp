@@ -27,11 +27,10 @@ import {
 } from "@uniswap/v3-sdk";
 import IUniswapV3Pool from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import JSBI from "jsbi";
-import { approveToken, toInputPermit } from "./permits";
-import { BigNumber, ethers } from "ethers";
+import { preparePermit2, toInputPermit } from "./permits";
+import { BigNumber } from "ethers";
 import { getErc20Balance } from "../utils";
 import { getLogger } from "../../utils/logger";
-import { MaxUint160 } from "@uniswap/permit2-sdk";
 
 const SLIPPAGE_TOLERANCE = new Percent(5, 100);
 
@@ -129,10 +128,9 @@ export async function swapUsingUniversalRouter(
 
   logger.debug(`Allowing Universal Router to spend ${input.symbol}`);
 
-  const { signature: permitSignature, permit } = await approveToken(
+  const { signature: permitSignature, permit } = await preparePermit2(
     sdk,
     input.address,
-    MaxUint160.toString(),
     PERMIT2_ADDRESS,
     UNIVERSAL_ROUTER_ADDRESS(chainId),
     chainId,

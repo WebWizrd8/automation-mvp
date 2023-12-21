@@ -3,3 +3,5 @@ dist
 .secret
 .env*
 sec/**/*
+*.log
+logs/

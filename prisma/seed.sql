@@ -35,8 +35,8 @@ INSERT INTO "public"."event_fetch_request" ("id", "createdAt", "updatedAt", "tag
 INSERT INTO "public"."event_fetch_request_trigger_function" ("id", "event_fetch_request_id", "function_name", "added_by")
 		VALUES(0, 1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
 
-INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name")
-		VALUES(0, 0, 'test_user', 2, 'test_action'), (1, 1, 'test_user', 2, 'test_alert');
+INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name","executed","last_executed_at","loop","loop_config")
+		VALUES(0, 0, 'test_user', 2, 'test_action',0, NOW(), false, NULL), (1, 1, 'test_user', 2, 'test_alert', 0, NOW(), false, NULL);
 
 INSERT INTO "public"."action_condition" ("action_id", "field", "operator", "value")
 		VALUES( 0, '$."priceUsd"', 'gt', '2030'), ( 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."change_percentage"', 'gte', '3'), ( 1, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."chain_id"', 'eq', '2'), ( 1, '$."duration"', 'eq', '"30D"');
@@ -102,6 +102,38 @@ END;
 
 $BODY$;
 
+CREATE OR REPLACE FUNCTION public.evaluate_loop_conditions(action_id integer)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    action_record RECORD;
+	max_executions int;
+BEGIN
+  SELECT a.loop as _loop, a.loop_config, a.executed INTO action_record FROM action a WHERE a.id = action_id;
+  IF action_record._loop = FALSE THEN
+    IF action_record.executed = 0 THEN
+      RETURN TRUE;
+    ELSE
+      RETURN FALSE;
+    END IF;
+  END IF;
+
+  IF action_record.loop_config IS NOT NULL THEN
+    IF jsonb_path_exists(action_record.loop_config, '$.max_executions') THEN
+    	max_executions = (action_record.loop_config->>'max_executions')::int;
+      IF action_record.executed >= max_executions THEN
+        RETURN FALSE;
+      ELSE
+        RETURN TRUE;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN FALSE;
+END;
+
+$function$;
 
 CREATE OR REPLACE FUNCTION find_matching_actions(event_data JSONB)
   RETURNS TABLE (action_id INT)
@@ -125,7 +157,7 @@ BEGIN
       WHERE c.action_id = action_record.id
     ) INTO conditions_array;
         
-    IF evaluate_conditions(event_data, conditions_array) THEN
+    IF evaluate_conditions(event_data, conditions_array) AND evaluate_loop_conditions(action_record.id) THEN
       action_id := action_record.id;
       RETURN NEXT;
     END IF;

@@ -58,10 +58,10 @@ export async function createEventFetchRequestFunctionWithActions(
   res: Response,
 ) {
   const body = req.body;
-  const event =
-    await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
-      body,
-    );
+
+  await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
+    body,
+  );
 
   res.send({});
 }

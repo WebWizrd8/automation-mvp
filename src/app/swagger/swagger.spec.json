@@ -208,6 +208,23 @@
           "items": {
             "type": "string"
           }
+        },
+        "loopRules": {
+          "type": "string",
+          "example": "LoopRules"
+        }
+      }
+    },
+    "LoopRules": {
+      "type": "object",
+      "properties": {
+        "loop": {
+          "type": "boolean",
+          "example": false
+        },
+        "loopConfig": {
+          "type": "string",
+          "example": "{\"maxExecutions\": 5}"
         }
       }
     },

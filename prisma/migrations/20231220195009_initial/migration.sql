@@ -1,29 +1,8 @@
 -- CreateEnum
-CREATE TYPE "action_type" AS ENUM ('discord', 'telegram', 'webhook');
+CREATE TYPE "action_type" AS ENUM ('discord', 'telegram', 'onchain', 'webhook');
 
 -- CreateEnum
 CREATE TYPE "connection_type" AS ENUM ('http', 'ws');
-
--- CreateTable
-CREATE TABLE "alert" (
-    "id" SERIAL NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "chain_id" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "alert_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "alert_condition" (
-    "id" SERIAL NOT NULL,
-    "alert_id" INTEGER NOT NULL,
-    "field" jsonpath NOT NULL,
-    "operator" TEXT NOT NULL,
-    "value" JSONB NOT NULL,
-
-    CONSTRAINT "alert_condition_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "chain" (
@@ -41,15 +20,6 @@ CREATE TABLE "chain_endpoint" (
     "url" TEXT NOT NULL,
 
     CONSTRAINT "chain_endpoint_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "alert_destination" (
-    "id" SERIAL NOT NULL,
-    "alert_id" INTEGER NOT NULL,
-    "destination_id" INTEGER NOT NULL,
-
-    CONSTRAINT "alert_destination_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -148,6 +118,10 @@ CREATE TABLE "action" (
     "user_id" TEXT NOT NULL,
     "chain_id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
+    "executed" INTEGER NOT NULL DEFAULT 0,
+    "last_executed_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "loop" BOOLEAN NOT NULL DEFAULT false,
+    "loop_config" JSONB,
 
     CONSTRAINT "action_pkey" PRIMARY KEY ("id")
 );
@@ -183,13 +157,7 @@ CREATE UNIQUE INDEX "event_tag_name_key" ON "event_tag"("name");
 CREATE UNIQUE INDEX "event_fetch_request_trigger_function_function_name_key" ON "event_fetch_request_trigger_function"("function_name");
 
 -- AddForeignKey
-ALTER TABLE "alert" ADD CONSTRAINT "alert_chain_id_fkey" FOREIGN KEY ("chain_id") REFERENCES "chain"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- AddForeignKey
 ALTER TABLE "chain_endpoint" ADD CONSTRAINT "chain_endpoint_chain_id_fkey" FOREIGN KEY ("chain_id") REFERENCES "chain"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- AddForeignKey
-ALTER TABLE "alert_destination" ADD CONSTRAINT "alert_destination_destination_id_fkey" FOREIGN KEY ("destination_id") REFERENCES "destination"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "provider_chain" ADD CONSTRAINT "provider_chain_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "provider"("id") ON DELETE CASCADE ON UPDATE CASCADE;
