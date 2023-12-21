@@ -124,12 +124,21 @@ async function run() {
   // const smartWalletSdk = await getSdk(smartWallet);
 
   //Approve Smart Wallet to spend WMATIC from personal wallet
-  await approveToken(
-    personalSdk,
-    WMATIC.address,
-    ethers.constants.MaxUint256.toString(),
-    await smartWallet.getAddress(),
-  );
+  // {
+  //   const txApprove = await approveToken(
+  //     personalSdk,
+  //     WMATIC.address,
+  //     ethers.constants.MaxUint256.toString(),
+  //     await smartWallet.getAddress(),
+  //   );
+  //   const txReceipt = await txApprove.send();
+  //   await txReceipt.wait(1);
+  //   console.log(
+  //     `Approved ${
+  //       WMATIC.symbol
+  //     } on personalWallet for ${await smartWallet.getAddress()}`,
+  //   );
+  // }
 
   //This wallet will act as out backend server wallet
   const sessionWallet = new LocalWalletNode({
@@ -166,11 +175,9 @@ async function run() {
     accountAddress: await smartWallet.getAddress(),
   });
 
-  const sessionSdk = await getSdk(sessionSmartWallet);
-
   const inputAmount = ethers.utils.parseEther("1").toString();
   await swapUsingUniversalRouter(
-    sessionSdk,
+    sessionSmartWallet,
     await personalWallet.getAddress(),
     inputAmount,
   );
@@ -178,10 +185,11 @@ async function run() {
 }
 
 const swapUsingUniversalRouter = async (
-  sdk: ThirdwebSDK,
+  smartWallet: SmartWallet,
   userWalletAddress: string,
   inputAmount: string,
 ) => {
+  const sdk = await getSdk(smartWallet);
   // const sdkWalletAddress = await sdk.wallet.getAddress();
   console.log(
     "Uniswap Universal Router Address",
@@ -190,7 +198,7 @@ const swapUsingUniversalRouter = async (
 
   console.log("Allowing Permit2 to spend WMATIC");
 
-  await approveToken(
+  const txApproveTokenIn = await approveToken(
     sdk,
     WMATIC.address,
     ethers.constants.MaxUint256.toString(),
@@ -229,7 +237,29 @@ const swapUsingUniversalRouter = async (
   console.log("params", params);
 
   //Transfer some WMATIC to the smart wallet from the user wallet
-  await transferFrom(sdk, userWalletAddress, inputAmount, WMATIC.address);
+  const txTransferTokenIn = await transferFrom(
+    sdk,
+    userWalletAddress,
+    inputAmount,
+    WMATIC.address,
+  );
+
+  const universalRouterContract = await sdk.getContract(
+    UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
+  );
+  const iface = new ethers.utils.Interface([
+    "function execute(bytes, bytes[])",
+  ]);
+  const data = iface.decodeFunctionData("execute", params.calldata).slice();
+  console.log("Data", data);
+
+  const txSwap = universalRouterContract.prepare(
+    "execute(bytes, bytes[])",
+    data,
+    {
+      value: params.value,
+    },
+  );
 
   console.log(
     "Smart Wallet Balance for Token",
@@ -242,17 +272,19 @@ const swapUsingUniversalRouter = async (
     await balance(sdk, WMATIC_USDC.token1.address),
   );
 
-  console.log("Sending transaction");
+  console.log("Sending transactions");
 
-  const tx = await sdk.wallet.sendRawTransaction({
-    data: params.calldata,
-    to: UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
-    value: params.value,
-    from: await sdk.wallet.getAddress(),
-    gasLimit: BigNumber.from("1957840"),
-  });
-  console.log("Transaction sent, waiting for confirmations", tx);
-  await tx.wait(1);
+  await smartWallet.executeBatch([txApproveTokenIn, txTransferTokenIn, txSwap]);
+
+  // const tx = await sdk.wallet.sendRawTransaction({
+  //   data: params.calldata,
+  //   to: UNIVERSAL_ROUTER_ADDRESS(chain.chainId),
+  //   value: params.value,
+  //   from: await sdk.wallet.getAddress(),
+  //   gasLimit: BigNumber.from("1957840"),
+  // });
+  // console.log("Transaction sent, waiting for confirmations", tx);
+  // await tx.wait(1);
 
   console.log(
     "Smart Wallet Balance for Token",
@@ -275,17 +307,18 @@ const approveToken = async (
   console.log("Approving token allowance for", spender);
   const erc20Contract = await sdk.getContract(token);
   const txDeposit = erc20Contract.prepare("approve", [spender, amount]);
-  const txSent = await txDeposit.send();
+  return txDeposit;
+  // const txSent = await txDeposit.send();
   // const rawTx = await txApprove.populateTransaction();
   // console.log("txPrepared", rawTx);
   // const txReceipt = await sdk.wallet.sendRawTransaction(rawTx);
-  await txSent.wait(1);
-  console.log("Tx Receipt for tokenApproval", txSent);
-  const allowance = await erc20Contract.call("allowance", [
-    await sdk.wallet.getAddress(),
-    spender,
-  ]);
-  console.log(`Allowance for ${spender}`, allowance);
+  // await txSent.wait(1);
+  // console.log("Tx Receipt for tokenApproval", txSent);
+  // const allowance = await erc20Contract.call("allowance", [
+  //   await sdk.wallet.getAddress(),
+  //   spender,
+  // ]);
+  // console.log(`Allowance for ${spender}`, allowance);
 };
 
 const approvePermit = async (
@@ -471,16 +504,17 @@ async function transferFrom(
   token: string,
 ) {
   const contract = await sdk.getContract(token);
-  const txDeposit = contract.prepare("transferFrom", [
+  const txTransfer = contract.prepare("transferFrom", [
     from,
     await sdk.wallet.getAddress(),
     amount,
   ]);
-  const txSent = await txDeposit.send();
-  await txSent.wait(1);
-  console.log(
-    `Transfered ${amount} of ${token} from ${from} to ${await sdk.wallet.getAddress()}`,
-  );
+  return txTransfer;
+  // const txSent = await txDeposit.send();
+  // await txSent.wait(1);
+  // console.log(
+  //   `Transfered ${amount} of ${token} from ${from} to ${await sdk.wallet.getAddress()}`,
+  // );
 }
 
 run().catch(console.error);

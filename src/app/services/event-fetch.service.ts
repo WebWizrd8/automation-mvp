@@ -3,7 +3,6 @@ import dbClient from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
   EventFetchRequestTriggerFunctionName,
-  EventFetchRequestTriggerRequestSchema,
   EventFetchRequestTriggerResponse,
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,

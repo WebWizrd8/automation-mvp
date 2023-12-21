@@ -4,10 +4,7 @@ import {
   EventFetchRequestService,
   EventTagService,
 } from "../services/event-fetch.service";
-import {
-  EventFetchRequestTriggerRequestSchema,
-  EventFetchRequestTriggerWithConditionsRequestSchema,
-} from "../models/event-fetch";
+import { EventFetchRequestTriggerWithConditionsRequestSchema } from "../models/event-fetch";
 import { getLogger } from "../../utils/logger";
 
 const logger = getLogger("event-fetch.controller");

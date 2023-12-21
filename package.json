@@ -49,6 +49,7 @@
     "@uniswap/sdk-core": "^4.0.9",
     "@uniswap/universal-router-sdk": "^2.0.2",
     "@uniswap/v3-sdk": "^3.10.0",
+    "abi-decoder": "^2.4.0",
     "axios": "^1.6.2",
     "cron": "^3.1.6",
     "date-fns": "^3.0.5",
