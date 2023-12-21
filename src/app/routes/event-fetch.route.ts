@@ -25,6 +25,11 @@ eventFetchRouter.get(
 );
 
 eventFetchRouter.get(
+  "/base-listeners/functions",
+  eventFetchController.getEventFetchRequestFunctions,
+);
+
+eventFetchRouter.get(
   "/base-listeners/trigger-with-actions/:id",
   eventFetchController.getEventFetchRequestFunctionForIdWithActions,
 );

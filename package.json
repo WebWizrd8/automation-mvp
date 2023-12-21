@@ -51,6 +51,7 @@
     "@uniswap/v3-sdk": "^3.10.0",
     "axios": "^1.6.2",
     "cron": "^3.1.6",
+    "date-fns": "^3.0.5",
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
     "ethers": "^5.7.2",

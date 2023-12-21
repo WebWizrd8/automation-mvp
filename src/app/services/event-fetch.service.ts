@@ -2,6 +2,8 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import dbClient from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
+  EventFetchRequestTriggerFunctionName,
+  EventFetchRequestTriggerRequestSchema,
   EventFetchRequestTriggerResponse,
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
@@ -140,6 +142,10 @@ export class EventFetchRequestFunctionService {
         : null,
       addedBy: event.added_by,
     };
+  }
+
+  getAllEventFetchRequestFunctions(): string[] {
+    return Object.values(EventFetchRequestTriggerFunctionName);
   }
 
   async getEventFetchRequestFunctionForIdWithActions(
