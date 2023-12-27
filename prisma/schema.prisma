@@ -18,6 +18,7 @@ model chain {
   action              action[]
   account_factory     account_factory[]
   smart_account       smart_account[]
+  session_key         session_key[]
 }
 
 model chain_endpoint {
@@ -193,4 +194,21 @@ model smart_account {
   createdAt      DateTime        @default(now())
   chain          chain           @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   factory        account_factory @relation(fields: [factory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  session_key    session_key[]
+}
+
+model session_key {
+  id                    Int           @id @default(autoincrement())
+  session_key_address   String
+  smart_account_id      Int
+  chain_id              Int
+  approved_call_targets String[]
+  native_token_limit    Float
+  start_date            DateTime
+  expiration_date       DateTime
+  txn_hash              String
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  chain                 chain         @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  smart_account         smart_account @relation(fields: [smart_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

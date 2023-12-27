@@ -5,6 +5,8 @@ import accountRoutes from "./routes/account.route";
 import userRoutes from "./routes/user.route";
 import swaggerRoute from "./swagger";
 import { initEngine, stopEngine } from "../engine";
+import { errorHandler } from "./middlewares";
+import "express-async-errors";
 
 const app: Express = express();
 
@@ -25,6 +27,8 @@ app.use("/chain", chainRoutes);
 app.use("/account", accountRoutes);
 app.use("/chain-event", eventFetchRoutes);
 app.use("/user", userRoutes);
+
+app.use(errorHandler);
 
 export default app;
 

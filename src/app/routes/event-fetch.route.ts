@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as eventFetchController from "../controllers/event-fetch.controller";
+import "express-async-errors";
 
 const eventFetchRouter = Router();
 

@@ -178,3 +178,5 @@ select find_matching_actions('{
   "changeUsd": 713.6668745306151,
   "direction": "UP"
 }');
+
+INSERT INTO "public"."account_factory" ("id", "address", "chain_id", "active") VALUES (1, '0xC0b522846a965345d4135ae5d55cF2954D3aF82a', 1, 't');

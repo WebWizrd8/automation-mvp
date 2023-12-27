@@ -22,7 +22,7 @@ async function getAllBackendWallets(_req: Request, res: Response) {
 }
 
 async function getSmartAccountFromPersonalWallet(req: Request, res: Response) {
-  const personalWalletAddress = Number(req.params.walletAddress);
+  const personalWalletAddress = req.params.walletAddress;
   const smartAccount = await accountsService.getSmartAccountFromPersonalWallet(
     personalWalletAddress,
   );

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import accountsController from "../controllers/accounts.controller";
+import "express-async-errors";
 
 const router = Router();
 

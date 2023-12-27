@@ -57,6 +57,7 @@ const swaggerOptions = {
       nativeTokenLimit: 0.5,
       startDate: "2021-01-01T00:00:00.000Z",
       expirationDate: "2021-01-01T00:00:00.000Z",
+      txnHash: "0x000",
     },
     RegisterUser: {
       userAddress: "0x000",

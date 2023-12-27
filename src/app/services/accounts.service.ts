@@ -61,10 +61,38 @@ export class BackendWallet {
 }
 
 export class SmartAccountRecord {
+  id: number;
   walletAddress: string;
+  userAddress: string;
+  factoryId: number;
+  chainId: number;
+  active: boolean;
+  createdAt: Date;
 
-  constructor() {
-    this.walletAddress = "0x7780CcB62782b58c34A51837097B3BD2BD2c4416";
+  constructor({
+    id,
+    walletAddress,
+    userAddress,
+    factoryId,
+    chainId,
+    active,
+    createdAt,
+  }: {
+    id: number;
+    walletAddress: string;
+    userAddress: string;
+    factoryId: number;
+    chainId: number;
+    active: boolean;
+    createdAt: Date;
+  }) {
+    this.id = id;
+    this.walletAddress = walletAddress;
+    this.userAddress = userAddress;
+    this.factoryId = factoryId;
+    this.chainId = chainId;
+    this.active = active;
+    this.createdAt = createdAt;
   }
 }
 
@@ -91,6 +119,24 @@ export class AccountsService {
     return await Promise.resolve(accountFactories);
   }
 
+  async getAccountFactoryByAddress(
+    address: string,
+  ): Promise<AccountFactoryRecord> {
+    if (address === "0xC0b522846a965345d4135ae5d55cF2954D3aF82a") {
+      return await Promise.resolve(
+        new AccountFactoryRecord({
+          id: 1,
+          address: "0xC0b522846a965345d4135ae5d55cF2954D3aF82a",
+          chainId: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          description: "Test account factory",
+        }),
+      );
+    }
+    throw new Error("Account factory not found");
+  }
+
   async getAllBackendWallets(): Promise<BackendWallet[]> {
     const backendWallets = [
       new BackendWallet({
@@ -104,20 +150,85 @@ export class AccountsService {
   }
 
   async getSmartAccountFromPersonalWallet(
-    _personalWalletAddress: number,
+    personalWalletAddress: string,
   ): Promise<SmartAccountRecord> {
-    return await Promise.resolve(new SmartAccountRecord());
+    const t = await this.client.smart_account.findFirst({
+      where: {
+        user_address: personalWalletAddress,
+      },
+    });
+
+    if (t === null) {
+      throw new Error("Smart account not found");
+    }
+
+    return new SmartAccountRecord({
+      id: t.id,
+      walletAddress: t.wallet_address,
+      userAddress: t.user_address,
+      factoryId: t.factory_id,
+      chainId: t.chain_id,
+      active: t.active,
+      createdAt: t.createdAt,
+    });
+  }
+
+  async getSmartAccountFromAddress(
+    address: string,
+  ): Promise<SmartAccountRecord> {
+    const t = await this.client.smart_account.findFirst({
+      where: {
+        wallet_address: address,
+      },
+    });
+
+    if (t === null) {
+      throw new Error("Smart account not found");
+    }
+
+    return new SmartAccountRecord({
+      id: t.id,
+      walletAddress: t.wallet_address,
+      userAddress: t.user_address,
+      factoryId: t.factory_id,
+      chainId: t.chain_id,
+      active: t.active,
+      createdAt: t.createdAt,
+    });
   }
 
   async registerSmartAccount(
-    _smartAccountRegisterRequest: SmartAccountRegisterRequest,
+    smartAccountRegisterRequest: SmartAccountRegisterRequest,
   ): Promise<void> {
-    return await Promise.resolve();
+    await this.client.smart_account.create({
+      data: {
+        active: true,
+        wallet_address: smartAccountRegisterRequest.accountAddress,
+        user_address: smartAccountRegisterRequest.userAddress,
+        factory_id: await this.getAccountFactoryByAddress(
+          smartAccountRegisterRequest.factoryAddress,
+        ).then((factory) => factory.id),
+        chain_id: smartAccountRegisterRequest.chainId,
+      },
+    });
   }
 
   async registerSessionKey(
-    _registerSessionKeyRequest: RegisterSessionKeyRequest,
+    registerSessionKeyRequest: RegisterSessionKeyRequest,
   ): Promise<void> {
-    return await Promise.resolve();
+    await this.client.session_key.create({
+      data: {
+        session_key_address: registerSessionKeyRequest.sessionKeyAddress,
+        smart_account_id: await this.getSmartAccountFromAddress(
+          registerSessionKeyRequest.smartAccountAddress,
+        ).then((smartAccount) => smartAccount.id),
+        chain_id: registerSessionKeyRequest.chainId,
+        approved_call_targets: registerSessionKeyRequest.approvedCallTargets,
+        native_token_limit: registerSessionKeyRequest.nativeTokenLimit,
+        start_date: registerSessionKeyRequest.startDate,
+        expiration_date: registerSessionKeyRequest.expirationDate,
+        txn_hash: registerSessionKeyRequest.txnHash,
+      },
+    });
   }
 }

@@ -18,8 +18,9 @@ export const RegisterSessionKeyRequestSchema = z.object({
   chainId: z.number(),
   approvedCallTargets: z.array(z.string()),
   nativeTokenLimit: z.number(),
-  startDate: z.date(),
-  expirationDate: z.date(),
+  startDate: z.coerce.date(),
+  expirationDate: z.coerce.date(),
+  txnHash: z.string(),
 });
 
 export type RegisterSessionKeyRequest = z.infer<

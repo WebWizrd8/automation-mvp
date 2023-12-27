@@ -12,3 +12,5 @@ npx prisma migrate dev --create-only --name $1
 dir=$(ls -lUr prisma/migrations | grep ^d | awk '{print $NF}' | grep $1 | tail -1)
 echo $dir
 mv down.sql prisma/migrations/"${dir}"/down.sql
+# ignore error if file doesn't exist
+rm prisma/migrations/down.sql 2> /dev/null
