@@ -2,10 +2,12 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import dbClient from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
+  EventFetchRequestTriggerFunctionName,
   EventFetchRequestTriggerResponse,
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
   EventFetchTagResponse,
+  getConditionsForFunctionName,
 } from "../models/event-fetch";
 import { getLogger } from "../../utils/logger";
 import { ActionConditionRecord } from "../../db/event";
@@ -140,6 +142,17 @@ export class EventFetchRequestFunctionService {
         : null,
       addedBy: event.added_by,
     };
+  }
+
+  getAllEventFetchRequestFunctions(): Record<string, unknown> {
+    const fnNames = Object.values(EventFetchRequestTriggerFunctionName);
+    const fnNamesWithConditions: Record<string, unknown> = {};
+
+    for (const fnName of fnNames) {
+      const conditions = getConditionsForFunctionName(fnName);
+      fnNamesWithConditions[fnName] = conditions;
+    }
+    return fnNamesWithConditions;
   }
 
   async getEventFetchRequestFunctionForIdWithActions(

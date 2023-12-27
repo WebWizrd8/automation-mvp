@@ -4,6 +4,10 @@ import {
   EventFetchRequestService,
   EventTagService,
 } from "../services/event-fetch.service";
+import { EventFetchRequestTriggerWithConditionsRequestSchema } from "../models/event-fetch";
+import { getLogger } from "../../utils/logger";
+
+const logger = getLogger("event-fetch.controller");
 
 const eventTagService = new EventTagService();
 const eventFetchRequestService = new EventFetchRequestService();
@@ -41,6 +45,12 @@ export async function getEventFetchRequestFunctionById(
   res.send(event);
 }
 
+export function getEventFetchRequestFunctions(_req: Request, res: Response) {
+  const event =
+    eventFetchRequestFunctionService.getAllEventFetchRequestFunctions();
+  res.send(event);
+}
+
 export async function getEventFetchRequestFunctionForIdWithActions(
   req: Request,
   res: Response,
@@ -59,9 +69,19 @@ export async function createEventFetchRequestFunctionWithActions(
 ) {
   const body = req.body;
 
-  await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
-    body,
-  );
+  const parsedEvent =
+    EventFetchRequestTriggerWithConditionsRequestSchema.safeParse(body);
+  if (!parsedEvent.success) {
+    logger.error(
+      "Error parsing event fetch request trigger function",
+      parsedEvent.error,
+    );
+    res.status(400).send(parsedEvent.error.issues);
+  } else {
+    await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
+      parsedEvent.data,
+    );
+  }
 
   res.send({});
 }

@@ -118,7 +118,7 @@ model token_prices {
 model event_fetch_request_trigger_function {
   id                     Int                 @id @default(autoincrement())
   event_fetch_request_id Int
-  function_name          String              @unique
+  function_name          String
   function_args          Json?
   event_fetch_request    event_fetch_request @relation(fields: [event_fetch_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   added_by               String
@@ -136,7 +136,7 @@ model action {
   action_condition                        action_condition[]
   event_fetch_request_trigger_function    event_fetch_request_trigger_function @relation(fields: [event_fetch_request_trigger_function_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   executed                                Int                                  @default(0)
-  last_executed_at                        DateTime?                           @default(now())
+  last_executed_at                        DateTime?                            @default(now())
   loop                                    Boolean                              @default(false)
   loop_config                             Json?
 }

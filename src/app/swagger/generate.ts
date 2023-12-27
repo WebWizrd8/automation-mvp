@@ -37,7 +37,7 @@ const swaggerOptions = {
     },
     EventFetchRequest: {
       eventFetchRequestId: 1,
-      functionName: "SPOT_PRICE_MATCH {% now 'unix', '' %}",
+      functionName: "SPOT_PRICE_MATCH",
       functionArgs: null,
       addedBy: "test_user",
       actions: ["Action"],

@@ -153,9 +153,6 @@ CREATE UNIQUE INDEX "endpoint_name_key" ON "endpoint"("name");
 -- CreateIndex
 CREATE UNIQUE INDEX "event_tag_name_key" ON "event_tag"("name");
 
--- CreateIndex
-CREATE UNIQUE INDEX "event_fetch_request_trigger_function_function_name_key" ON "event_fetch_request_trigger_function"("function_name");
-
 -- AddForeignKey
 ALTER TABLE "chain_endpoint" ADD CONSTRAINT "chain_endpoint_chain_id_fkey" FOREIGN KEY ("chain_id") REFERENCES "chain"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
