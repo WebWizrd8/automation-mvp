@@ -1,5 +1,6 @@
 import { action_type } from "@prisma/client";
 import { z } from "zod";
+import { EventFetchRequestTriggerFunctionName } from "../../db/event";
 
 export interface EventFetchTagResponse {
   id: number;
@@ -44,15 +45,6 @@ export interface EventFetchRequestTriggerWithConditionsResponse
       destinationConfig: string;
     }[];
   }[];
-}
-
-//make an enum with all the function names
-export enum EventFetchRequestTriggerFunctionName {
-  SPOT_PRICE_MATCH = "SPOT_PRICE_MATCH",
-  SPOT_PRICE_INCREASE = "SPOT_PRICE_INCREASE",
-  SPOT_PRICE_DECREASE = "SPOT_PRICE_DECREASE",
-  MA_ABOVE = "MA_ABOVE",
-  MA_BELOW = "MA_BELOW",
 }
 
 export function getConditionsForFunctionName(functionName: string) {

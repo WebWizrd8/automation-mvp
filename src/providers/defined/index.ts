@@ -6,23 +6,11 @@ import ApiProvider, { ApiHttpInput } from "..";
 import { ProviderRecord } from "../../db/provider";
 
 type Address = string;
-type ChainInput = EVMChainId | EVMChains;
-
-const chainMapping = {
-  [EVMChainId.ETH]: 1,
-  [EVMChainId.ARBITRUM]: 42161,
-  [EVMChainId.ZKSYNC]: 324,
-  [EVMChainId.SCROLL]: 534352,
-};
+type ChainInput = EVMChains;
 
 export default class DefinedProvider {
   public getChainId(chainId: ChainInput): number {
-    if (typeof chainId === "string") {
-      const chain = chainId as EVMChains;
-      const chainIdNumber = EVMChainId[chain];
-      return chainMapping[chainIdNumber];
-    }
-    return chainMapping[chainId];
+    return EVMChainId[chainId];
   }
 }
 

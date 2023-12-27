@@ -1,6 +1,8 @@
 import express, { Express, Request, Response } from "express";
 import eventFetchRoutes from "./routes/event-fetch.route";
 import chainRoutes from "./routes/chain.route";
+import accountRoutes from "./routes/account.route";
+import userRoutes from "./routes/user.route";
 import swaggerRoute from "./swagger";
 import { initEngine, stopEngine } from "../engine";
 
@@ -20,7 +22,9 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.use("/chain", chainRoutes);
+app.use("/account", accountRoutes);
 app.use("/chain-event", eventFetchRoutes);
+app.use("/user", userRoutes);
 
 export default app;
 

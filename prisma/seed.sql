@@ -1,14 +1,15 @@
 INSERT INTO "public"."chain" ("id", "name")
-		VALUES(1, 'Scroll Testnet'), (2, 'Ethereum Mainnet'), (3, 'Ethereum Sepolia Testnet');
+		VALUES(1, 'Ethereum Mainnet'), (534351, 'Scroll Testnet'), (11155111 , 'Ethereum Sepolia Testnet'), (421614, 'Arbitrum Sepolia Testnet'), (80001, 'Polygon Mumbai Testnet');
+
 INSERT INTO "public"."chain_endpoint" ("id", "chain_id", "type", "url")
-		VALUES(1, 1, 'WS', 'ws://archive-node.sepolia.scroll.xyz:8546'), 
-		(2, 2, 'WSS', 'wss://eth-mainnet.g.alchemy.com/v2/ALCHEMY_API_TOKEN');
+		VALUES(1, 534351, 'WS', 'ws://archive-node.sepolia.scroll.xyz:8546'), 
+		(2, 1, 'WSS', 'wss://eth-mainnet.g.alchemy.com/v2/ALCHEMY_API_TOKEN');
 
 INSERT INTO "public"."provider" ("id", "name", "createdAt", "updatedAt", "description", "http_token", "ws_token")
 		VALUES(0, 'Alchemy', NOW(), NOW(), 'Alchemy Provider', '""', 'ALCHEMY_API_TOKEN'), (1, 'Defined', NOW(), NOW(), 'Defined.fi Provider', 'DEFINED_API', '""');
 
 INSERT INTO "public"."provider_chain" ("provider_id", "chain_id", "provider_chain")
-		VALUES(0, 2, '1'), (1, 2, '1');
+		VALUES(0, 1, '1'), (1, 1, '1');
 
 INSERT INTO "public"."endpoint" ("id", "name", "createdAt", "updatedAt", "description", "connection_kind", "provider_id")
 		VALUES(0, 'newHeads', NOW(), NOW(), 'Get new heads from the chain using Alchemy Ws', 'ws', 0), (1, 'getTokenPrices', NOW(), NOW(), 'Get token prices from Defined', 'http', 1);
@@ -17,29 +18,29 @@ INSERT INTO "public"."event_tag" ("id", "name", "createdAt", "updatedAt", "descr
 		VALUES(0, 'GET_NEW_BLOCKS', NOW(), NOW(), 'Get new blocks form the chain'), (1, 'GET_SPOT_PRICE', NOW(), NOW(), 'Get Spot price from the chain');
 
 INSERT INTO "public"."event_tag_chain" ("tag_id", "chain_id", "endpoint_id")
-		VALUES(0, 2, 0), (1, 2, 1);
+		VALUES(0, 1, 0), (1, 1, 1);
 
 INSERT INTO "public"."event_fetch_request" ("id", "createdAt", "updatedAt", "tag_id", "chain_id", "payload", "added_by")
-		VALUES(0, NOW(), NOW(), 0, 2, '{
+		VALUES(0, NOW(), NOW(), 0, 1, '{
    "jsonrpc": "2.0",
    "id": 2,
    "method": "eth_subscribe",
    "params": [
      "newHeads"
    ]
- }', 'test_user'), (1, NOW(), NOW(), 1, 2, '{
+ }', 'test_user'), (1, NOW(), NOW(), 1, 1, '{
    "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
    "networkId": 1
  }', 'test_user');
 
-INSERT INTO "public"."event_fetch_request_trigger_function" ("id", "event_fetch_request_id", "function_name", "added_by")
-		VALUES(0, 1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 1, 'SPOT_PRICE_CHANGE', 'test_user');
+INSERT INTO "public"."event_fetch_request_trigger_function" ("event_fetch_request_id", "function_name", "added_by")
+		VALUES(1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 'SPOT_PRICE_INCREASE', 'test_user');
 
 INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name","executed","last_executed_at","loop","loop_config")
-		VALUES(0, 0, 'test_user', 2, 'test_action',0, NOW(), false, NULL), (1, 1, 'test_user', 2, 'test_alert', 0, NOW(), false, NULL);
+		VALUES(0, 0, 'test_user', 1, 'test_action',0, NOW(), false, NULL), (1, 1, 'test_user', 1, 'test_alert', 0, NOW(), false, NULL);
 
 INSERT INTO "public"."action_condition" ("action_id", "field", "operator", "value")
-		VALUES( 0, '$."priceUsd"', 'gt', '2030'), ( 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."change_percentage"', 'gte', '3'), ( 1, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."chain_id"', 'eq', '2'), ( 1, '$."duration"', 'eq', '"30D"');
+		VALUES( 0, '$."priceUsd"', 'gt', '2030'), ( 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."change_percentage"', 'gte', '3'), ( 1, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."chain_id"', 'eq', '1'), ( 1, '$."duration"', 'eq', '"30D"');
 
 INSERT INTO "public"."destination" ("action_id", "type", "destination_config") VALUES
 (0, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
@@ -171,7 +172,7 @@ $BODY$;
 select find_matching_actions('{"priceUsd": "2020", "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"}');
 select find_matching_actions('{
   "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  "chain_id": 2,
+  "chain_id": 1,
   "duration": "30D",
   "change_percentage": 10.34243425,
   "changeUsd": 713.6668745306151,

@@ -1,4 +1,5 @@
 import ApiProvider, { ApiWsInput } from "..";
+import { EVMChainId } from "../../chains/types";
 import { ProviderRecord } from "../../db/provider";
 import DataFetcher from "../../fetchers/data-fetcher";
 import { BufferLike } from "../../fetchers/types";
@@ -23,7 +24,7 @@ export class AlchemyProviderWsApi extends ApiProvider {
   }
 
   getUrl(chainId: number) {
-    if (chainId === 2) {
+    if (chainId === EVMChainId.ETH) {
       return `wss://eth-mainnet.g.alchemy.com/v2/${this.record.ws_token}`;
     } else {
       throw new Error(`Unknown chainId: ${chainId} for AlchemyProviderWsApi`);

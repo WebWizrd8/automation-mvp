@@ -1,8 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import dbClient from "../../utils/db-client";
+import dbClient, { PrismaClientTrans } from "../../utils/db-client";
 import {
   EventFetchRequestResponse,
-  EventFetchRequestTriggerFunctionName,
   EventFetchRequestTriggerResponse,
   EventFetchRequestTriggerWithConditionsRequest,
   EventFetchRequestTriggerWithConditionsResponse,
@@ -10,7 +9,15 @@ import {
   getConditionsForFunctionName,
 } from "../models/event-fetch";
 import { getLogger } from "../../utils/logger";
-import { ActionConditionRecord } from "../../db/event";
+import {
+  ActionConditionRecord,
+  EventFetchRequestTriggerFunctionName,
+} from "../../db/event";
+import { getToken } from "../../onchain/tokens";
+import { getAllowance } from "../../onchain/erc20";
+import { getReadOnlyThirdwebSDK } from "../../engine/thirdweb_engine";
+import { ethers } from "ethers";
+import { AccountsService } from "./accounts.service";
 
 const logger = getLogger("event-fetch.service");
 
@@ -291,15 +298,25 @@ export class EventFetchRequestFunctionService {
             }
           }
 
-          await tx.destination.createMany({
-            data: action.destinations.map((destination) => {
-              return {
-                action_id: actionsResp.id,
-                type: destination.destinationType,
-                destination_config: JSON.parse(destination.destinationConfig),
-              };
-            }),
-          });
+          for (const destination of action.destinations) {
+            const destinationRecord = {
+              action_id: actionsResp.id,
+              type: destination.destinationType,
+              destination_config: destination.destinationConfig,
+            };
+
+            await handleDestinationCreation(destinationRecord, loopRules, tx);
+          }
+
+          // await tx.destination.createMany({
+          //   data: action.destinations.map((destination) => {
+          //     return {
+          //       action_id: actionsResp.id,
+          //       type: destination.destinationType,
+          //       destination_config: JSON.parse(destination.destinationConfig),
+          //     };
+          //   }),
+          // });
         }
       });
     } catch (e) {
@@ -326,4 +343,82 @@ function prepareLoopRules(action: {
     loopRules.loopConfig = JSON.stringify(loopConfig);
   }
   return loopRules;
+}
+
+async function handleDestinationCreation(
+  destinationRecord: {
+    action_id: number;
+    type: "discord" | "telegram" | "onchain" | "webhook";
+    destination_config: string;
+  },
+  loopRules: { loop: boolean; loopConfig: string | null },
+  tx: PrismaClient | PrismaClientTrans,
+) {
+  switch (destinationRecord.type) {
+    case "discord": {
+      break;
+    }
+    case "telegram": {
+      break;
+    }
+    case "webhook": {
+      break;
+    }
+    case "onchain": {
+      const destinationConfig = JSON.parse(
+        destinationRecord.destination_config,
+      );
+
+      switch (destinationConfig.txnType) {
+        case "UNISWAP_V3_TRADE": {
+          const accountAddress = destinationConfig.accountAddress;
+          const amount = destinationConfig.amount;
+
+          const inTokenSymbol = destinationConfig.inTokenSymbol;
+          const chainId = destinationConfig.chainId;
+          const inToken = getToken(inTokenSymbol, chainId)!;
+          if (!inToken) {
+            throw new Error(`Token ${inTokenSymbol} is not supported`);
+          }
+          const inputAmount = ethers.utils
+            .parseUnits(amount.toString(), inToken.decimals)
+            .toString();
+          const sdk = getReadOnlyThirdwebSDK(chainId);
+          const accountService = new AccountsService(dbClient);
+          const smartAccountRecord =
+            await accountService.getSmartAccountFromPersonalWallet(
+              accountAddress,
+            );
+
+          // console.log(sdk, inToken.address, accountAddress, smartAccountRecord);
+
+          const allowance = await getAllowance(
+            sdk,
+            inToken.address,
+            accountAddress,
+            smartAccountRecord.walletAddress,
+          );
+
+          if (allowance.lt(inputAmount)) {
+            logger.error(
+              `Allowance ${allowance.toString()} is less than input amount ${inputAmount}`,
+            );
+            throw new Error(
+              `Allowance ${allowance.toString()} is less than input amount ${inputAmount} for ${inTokenSymbol}`,
+            );
+          }
+          break;
+        }
+        default:
+          logger.error("Unknown onchain destination type");
+      }
+      break;
+    }
+    default:
+      logger.error("Unknown destination type");
+  }
+
+  await tx.destination.create({
+    data: destinationRecord,
+  });
 }

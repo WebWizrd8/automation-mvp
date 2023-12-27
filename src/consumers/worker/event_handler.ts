@@ -2,14 +2,15 @@ import { find_matching_actions } from "../../db/functions";
 import { handleActions } from "../action_handler";
 import {
   EventFetchRequestRecord,
+  EventFetchRequestTriggerFunctionName,
   EventFetchRequestTriggerFunctionRecord,
+  EventTagName,
   getEventFetchRequestFunctionFromFetchRequestId,
   getEventTagRecordFromId,
 } from "../../db/event";
 import { Prisma } from "@prisma/client";
 import { getLogger } from "../../utils/logger";
 import dbClient from "../../utils/db-client";
-import { EventFetchRequestTriggerFunctionName } from "../../app/models/event-fetch";
 import { format } from "date-fns";
 import _ from "lodash";
 
@@ -22,7 +23,7 @@ export async function handleOnMessage(
   const eventTagRecord = await getEventTagRecordFromId(
     eventFetchRequestRecord.tag_id,
   );
-  if (eventTagRecord.name === "GET_SPOT_PRICE") {
+  if (eventTagRecord.name === EventTagName.GET_SPOT_PRICE) {
     await handleSpotPriceEvent(eventFetchRequestRecord, message);
   }
 }
