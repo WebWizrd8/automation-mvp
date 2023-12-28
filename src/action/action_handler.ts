@@ -13,6 +13,8 @@ import { Prisma } from "@prisma/client";
 import { getLogger } from "../utils/logger";
 import { approveToken } from "../onchain/uniswap/permits";
 import { MaxUint160, PERMIT2_ADDRESS } from "@uniswap/permit2-sdk";
+import { AccountsService } from "../app/services/accounts.service";
+import dbClient from "../utils/db-client";
 
 const logger = getLogger("consumer/woker/action_handler");
 
@@ -83,7 +85,6 @@ export const handleAction = async (
       }
     }
   }
-  console.log(actionRecords);
 };
 
 async function handleOnchainAction(
@@ -92,7 +93,6 @@ async function handleOnchainAction(
     destination_config: Prisma.JsonValue;
   }>,
 ) {
-  console.log("onchain");
   //TODO: approve transfer of tokens for this address to permit2
   //TODO: create session key for this address
   // const accountAddress = "0x7780CcB62782b58c34A51837097B3BD2BD2c4416";
@@ -112,7 +112,12 @@ async function handleOnchainAction(
       const { accountAddress, chainId, inTokenSymbol, outTokenSymbol, amount } =
         txnDestinationConfig;
       const chain = getChain(chainId);
-      const backendWallet = await getBackendWallet(chain, accountAddress);
+      const accountService = new AccountsService(dbClient);
+
+      const smartAccountAddress = (
+        await accountService.getSmartAccountFromPersonalWallet(accountAddress)
+      ).walletAddress;
+      const backendWallet = await getBackendWallet(chain, smartAccountAddress);
       const sdk = await getSdk(backendWallet, chain);
       const inToken = getToken(inTokenSymbol, chain.chainId);
       const outToken = getToken(outTokenSymbol, chain.chainId);
@@ -122,6 +127,7 @@ async function handleOnchainAction(
       const inputAmount = ethers.utils
         .parseUnits(amount.toString(), inToken.decimals)
         .toString();
+
       await approveToken(
         sdk,
         inToken.address,
