@@ -191,6 +191,14 @@
       }
     },
     "/chain-event/base-listeners/trigger-with-actions": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "post": {
         "description": "",
         "parameters": [
@@ -252,6 +260,33 @@
             "schema": {
               "$ref": "#/definitions/RegisterUser"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/destination/destination-config-schema/{destinationType}/{subType?}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "destinationType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "subType?",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "responses": {

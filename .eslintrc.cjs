@@ -11,7 +11,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint"],
   rules: {
-    "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     "@typescript-eslint/require-await": "error",
     "@typescript-eslint/no-floating-promises": ["error"]
   },
