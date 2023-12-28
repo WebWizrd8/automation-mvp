@@ -22,12 +22,17 @@ eventFetchRouter.get(
 );
 
 eventFetchRouter.get(
-  "/base-listeners/trigger-with-actions/:id",
+  "/base-listeners/trigger-with-actions/id/:id",
   eventFetchController.getEventFetchRequestFunctionForIdWithActions,
 );
 
+eventFetchRouter.get(
+  "/base-listeners/trigger-with-actions/user/:userId",
+  eventFetchController.getAllEventFetchRequestFunctionsWithActionsByUserId,
+);
+
 eventFetchRouter.post(
-  "/base-listeners/trigger-with-actions",
+  "/base-listeners/trigger-with-actions/create",
   async (req, res) => {
     /*  #swagger.parameters['body'] = {
             in: 'body',

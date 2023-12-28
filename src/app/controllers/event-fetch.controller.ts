@@ -63,6 +63,22 @@ export async function getEventFetchRequestFunctionForIdWithActions(
   res.send(event);
 }
 
+export async function getAllEventFetchRequestFunctionsWithActionsByUserId(
+  req: Request,
+  res: Response,
+) {
+  const userId = req.params.userId;
+  if (!userId) {
+    res.status(400).send("userId is required");
+    return;
+  }
+  const event =
+    await eventFetchRequestFunctionService.getAllEventFetchRequestFunctionsWithActions(
+      { userId },
+    );
+  res.send(event);
+}
+
 export async function createEventFetchRequestFunctionWithActions(
   req: Request,
   res: Response,

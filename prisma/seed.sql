@@ -28,25 +28,25 @@ INSERT INTO "public"."event_fetch_request" ("id", "createdAt", "updatedAt", "tag
    "params": [
      "newHeads"
    ]
- }', 'test_user'), (1, NOW(), NOW(), 1, 1, '{
+ }', '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6'), (1, NOW(), NOW(), 1, 1, '{
    "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
    "networkId": 1
- }', 'test_user');
+ }', '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6');
 
 INSERT INTO "public"."event_fetch_request_trigger_function" ("event_fetch_request_id", "function_name", "added_by")
-		VALUES(1, 'SPOT_PRICE_MATCH', 'test_user'), (1, 'SPOT_PRICE_INCREASE', 'test_user');
+		VALUES(1, 'SPOT_PRICE_MATCH', '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6'), (1, 'SPOT_PRICE_INCREASE', '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6');
 
-INSERT INTO "public"."action" ("id", "event_fetch_request_trigger_function_id", "user_id", "chain_id", "name","executed","last_executed_at","loop","loop_config")
-		VALUES(0, 0, 'test_user', 1, 'test_action',0, NOW(), false, NULL), (1, 1, 'test_user', 1, 'test_alert', 0, NOW(), false, NULL);
+INSERT INTO "public"."action" ("event_fetch_request_trigger_function_id", "user_id", "chain_id", "name","executed","last_executed_at","loop","loop_config")
+		VALUES( 1, '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', 1, 'test_action',0, NOW(), false, NULL), ( 2, '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', 1, 'test_alert', 0, NOW(), false, NULL);
 
 INSERT INTO "public"."action_condition" ("action_id", "field", "operator", "value")
-		VALUES( 0, '$."priceUsd"', 'gt', '2030'), ( 0, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."change_percentage"', 'gte', '3'), ( 1, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 1, '$."chain_id"', 'eq', '1'), ( 1, '$."duration"', 'eq', '"30D"');
+		VALUES( 1, '$."priceUsd"', 'gt', '2030'), ( 1, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."change_percentage"', 'gte', '3'), ( 2, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."chain_id"', 'eq', '1'), ( 2, '$."duration"', 'eq', '"30D"');
 
 INSERT INTO "public"."destination" ("action_id", "type", "destination_config") VALUES
-(0, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
-(0, 'discord', '{"template": "ETH Price: {{priceUsd}}", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
-(1, 'discord', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
-(1, 'telegram', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}');
+(1, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
+(1, 'discord', '{"template": "ETH Price: {{priceUsd}}", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(2, 'discord', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "discordUserId": "bruce_wayne", "discordWebhookUrl": "https://discord.com/api/webhooks/1179500410550095872/sN9S908S6Apqv9hlyw9xBPzLavPpqPb0UlQ1B-d4H6YHTdKY1LU8NElBj1fGeQnHOLr2"}'),
+(2, 'telegram', '{"template": "ETH Changed by {{change_percentage}} in {{duration}}.", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}');
 
 
 CREATE TYPE public.condition_type AS (
@@ -179,4 +179,6 @@ select find_matching_actions('{
   "direction": "UP"
 }');
 
-INSERT INTO "public"."account_factory" ("id", "address", "chain_id", "active") VALUES (1, '0xC0b522846a965345d4135ae5d55cF2954D3aF82a', 1, 't');
+INSERT INTO "public"."account_factory" ("address", "chain_id", "active") VALUES ('0xC0b522846a965345d4135ae5d55cF2954D3aF82a', 1, 't');
+
+INSERT INTO "public"."smart_account" ("user_address", "wallet_address", "factory_id", "chain_id", "active") VALUES ('0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', '0x7780CcB62782b58c34A51837097B3BD2BD2c4416', 1, 1, 't');

@@ -172,7 +172,7 @@
         }
       }
     },
-    "/chain-event/base-listeners/trigger-with-actions/{id}": {
+    "/chain-event/base-listeners/trigger-with-actions/id/{id}": {
       "get": {
         "description": "",
         "parameters": [
@@ -190,15 +190,28 @@
         }
       }
     },
-    "/chain-event/base-listeners/trigger-with-actions": {
+    "/chain-event/base-listeners/trigger-with-actions/user/{userId}": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
-      },
+      }
+    },
+    "/chain-event/base-listeners/trigger-with-actions/create": {
       "post": {
         "description": "",
         "parameters": [
