@@ -18,18 +18,19 @@ export default class DataProducer {
     onError: (error: BufferLike) => void,
   ) {
     console.log("Starting fetcher...");
-    const fetcher = await this.eventFetchRequest.getFethcher();
-    fetcher.onData((data) => {
-      onData(data);
-    });
-    fetcher.onError((error) => {
-      onError(error);
-    });
-    this.dataFetcher = fetcher;
     try {
+      const fetcher = await this.eventFetchRequest.getFethcher();
+      fetcher.onData((data) => {
+        onData(data);
+      });
+      fetcher.onError((error) => {
+        onError(error);
+      });
+      this.dataFetcher = fetcher;
       await fetcher.startFetching();
     } catch (e) {
-      logger.error("Error while staring fetcher ", e);
+      logger.error("Fetcher error ", e);
+      throw e;
     }
   }
 

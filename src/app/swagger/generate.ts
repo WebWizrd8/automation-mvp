@@ -26,7 +26,7 @@ const swaggerOptions = {
     Action: {
       userId: "test_user",
       name: "test_action",
-      chainId: 2,
+      chainId: 1,
       conditions: ["Condition"],
       destinations: ["Destination"],
       loopRules: "LoopRules",
@@ -41,6 +41,27 @@ const swaggerOptions = {
       functionArgs: null,
       addedBy: "test_user",
       actions: ["Action"],
+    },
+    SmartAccount: {
+      id: 1,
+      userAddress: "0x000",
+      accountAddress: "0x000",
+      factoryAddress: "0x000",
+      chainId: 1,
+    },
+    RegisterSessionKey: {
+      sessionKeyAddress: "0x000",
+      smartAccountAddress: "0x000",
+      chainId: 1,
+      approvedCallTargets: ["0x000"],
+      nativeTokenLimit: 0.5,
+      startDate: "2021-01-01T00:00:00.000Z",
+      expirationDate: "2021-01-01T00:00:00.000Z",
+      txnHash: "0x000",
+    },
+    RegisterUser: {
+      userAddress: "0x000",
+      address_type: "wallet",
     },
   },
 };

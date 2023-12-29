@@ -242,6 +242,15 @@ export async function getEndpointRecordFromFetchRequestId(
   return endpointRecord;
 }
 
+//make an enum with all the function names
+export enum EventFetchRequestTriggerFunctionName {
+  SPOT_PRICE_MATCH = "SPOT_PRICE_MATCH",
+  SPOT_PRICE_INCREASE = "SPOT_PRICE_INCREASE",
+  SPOT_PRICE_DECREASE = "SPOT_PRICE_DECREASE",
+  MA_ABOVE = "MA_ABOVE",
+  MA_BELOW = "MA_BELOW",
+}
+
 export class EventFetchRequestTriggerFunctionRecord {
   id: number;
   event_fetch_request_id: number;

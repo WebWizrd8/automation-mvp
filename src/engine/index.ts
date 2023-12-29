@@ -12,6 +12,7 @@ import {
 } from "../producers/queue";
 import { getNewBlocksChannel } from "../producers/types";
 import { getLogger } from "../utils/logger";
+import { initThirdwebSDK } from "./thirdweb_engine";
 
 const logger = getLogger("consumer/woker/event_handler");
 
@@ -80,28 +81,15 @@ const producerIds = new Map<number, string>();
 const consumerIds = new Map<number, string>();
 
 export async function initEngine() {
+  await initThirdwebSDK();
+
+  if (process.env.DISABLE_ENGINE === "true") {
+    logger.info("Engine disabled");
+    return;
+  }
+
   await initNewBlockListeners(producerManager);
   await initSpotPriceListeners(producerManager, consumerManager);
-  // const id = manager.create(
-  //   newBlockChannelId,
-  //   await getEventFetchRequestRecordFromId(0),
-  // );
-  //
-  // const eventFetchRecord = await getEventFetchRequestRecordFromId(1);
-  // const getMainnetTokenPricesId = manager.create("test_2", eventFetchRecord);
-  // const consumer_worker_id = await consumer_manager.create(
-  //   "test_2",
-  //   eventFetchRecord,
-  // );
-  //
-  // manager.start(id);
-  // manager.start(getMainnetTokenPricesId);
-  // //Timeout to wait for two blocks to be mined
-  // await new Promise((resolve) => setTimeout(resolve, 16000));
-  // manager.stop(id);
-  // manager.stop(getMainnetTokenPricesId);
-  // await new Promise((resolve) => setTimeout(resolve, 33000));
-  // consumer_manager.stop(consumer_worker_id);
 }
 
 export async function stopEngine() {

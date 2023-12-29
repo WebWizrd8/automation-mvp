@@ -32,12 +32,86 @@
         }
       }
     },
-    "/chain-event/tags": {
+    "/account/account-factories": {
       "get": {
         "description": "",
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/account/backend-wallets": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/account/smart-account/personal-wallet/{walletAddress}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "walletAddress",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/account/smart-account": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Register a new smart account",
+            "schema": {
+              "$ref": "#/definitions/SmartAccount"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/account/session-key": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Register Session Key",
+            "schema": {
+              "$ref": "#/definitions/RegisterSessionKey"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
       }
@@ -60,7 +134,7 @@
         }
       }
     },
-    "/chain-event/base-listeners": {
+    "/chain-event/tags": {
       "get": {
         "description": "",
         "responses": {
@@ -70,17 +144,9 @@
         }
       }
     },
-    "/chain-event/base-listeners/{id}": {
+    "/chain-event/base-listeners/functions": {
       "get": {
         "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -99,16 +165,6 @@
             "type": "string"
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/chain-event/base-listeners/functions": {
-      "get": {
-        "description": "",
         "responses": {
           "200": {
             "description": "OK"
@@ -144,6 +200,57 @@
             "description": "Add a new trigger with actions",
             "schema": {
               "$ref": "#/definitions/EventFetchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/chain-event/base-listeners": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/user/register": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Register a new user",
+            "schema": {
+              "$ref": "#/definitions/RegisterUser"
             }
           }
         ],
@@ -202,7 +309,7 @@
         },
         "chainId": {
           "type": "number",
-          "example": 2
+          "example": 1
         },
         "conditions": {
           "type": "array",
@@ -265,6 +372,86 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "SmartAccount": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
+        },
+        "userAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "accountAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "factoryAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "chainId": {
+          "type": "number",
+          "example": 1
+        }
+      }
+    },
+    "RegisterSessionKey": {
+      "type": "object",
+      "properties": {
+        "sessionKeyAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "smartAccountAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "chainId": {
+          "type": "number",
+          "example": 1
+        },
+        "approvedCallTargets": {
+          "type": "array",
+          "example": [
+            "0x000"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "nativeTokenLimit": {
+          "type": "number",
+          "example": 0.5
+        },
+        "startDate": {
+          "type": "string",
+          "example": "2021-01-01T00:00:00.000Z"
+        },
+        "expirationDate": {
+          "type": "string",
+          "example": "2021-01-01T00:00:00.000Z"
+        },
+        "txnHash": {
+          "type": "string",
+          "example": "0x000"
+        }
+      }
+    },
+    "RegisterUser": {
+      "type": "object",
+      "properties": {
+        "userAddress": {
+          "type": "string",
+          "example": "0x000"
+        },
+        "address_type": {
+          "type": "string",
+          "example": "wallet"
         }
       }
     }

@@ -9,13 +9,16 @@ datasource db {
 }
 
 model chain {
-  id                  Int                   @id @default(autoincrement())
+  id                  Int                   @id
   name                String
   chain_endpoint      chain_endpoint[]
   provider_chain      provider_chain[]
   event_tag_chain     event_tag_chain[]
   event_fetch_request event_fetch_request[]
   action              action[]
+  account_factory     account_factory[]
+  smart_account       smart_account[]
+  session_key         session_key[]
 }
 
 model chain_endpoint {
@@ -158,42 +161,54 @@ model destination {
   action             action      @relation(fields: [action_id], references: [id])
 }
 
-// model discord_destination {
-//   id                          String                        @id @db.Uuid
-//   user_id                     String
-//   discord_user_id             String
-//   webhook_url                 String
-//   discord_destination_payload discord_destination_payload[]
-// }
-// 
-// model discord_destination_payload {
-//   destination_id         Int                 @id
-//   discord_destination_id String              @db.Uuid
-//   template               String
-//   destination            destination         @relation(fields: [destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-//   discord_destination    discord_destination @relation(fields: [discord_destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-// }
-// 
-// model telegram_temporary_token {
-//   id         String   @id @db.Uuid
-//   user_id    String
-//   created_at DateTime
-//   expires_at DateTime
-// }
-// 
-// model telegram_destination {
-//   id                           String                         @id @db.Uuid
-//   user_id                      String
-//   chat_id                      String
-//   telegram_user_id             String
-//   telegram_destination_payload telegram_destination_payload[]
-// }
-// 
-// 
-// model telegram_destination_payload {
-//   destination_id          Int                  @id
-//   telegram_destination_id String               @db.Uuid
-//   template                String
-//   destination             destination          @relation(fields: [destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-//   telegram_destination    telegram_destination @relation(fields: [telegram_destination_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-// }
+enum address_type {
+  wallet
+  email
+}
+
+model user {
+  id           Int           @id @default(autoincrement())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  address      String?
+  address_type address_type?
+}
+
+model account_factory {
+  id            Int             @id @default(autoincrement())
+  address       String
+  chain_id      Int
+  active        Boolean
+  createdAt     DateTime        @default(now())
+  chain         chain           @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  smart_account smart_account[]
+}
+
+model smart_account {
+  id             Int             @id @default(autoincrement())
+  user_address   String
+  wallet_address String
+  factory_id     Int
+  chain_id       Int
+  active         Boolean
+  createdAt      DateTime        @default(now())
+  chain          chain           @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  factory        account_factory @relation(fields: [factory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  session_key    session_key[]
+}
+
+model session_key {
+  id                    Int           @id @default(autoincrement())
+  session_key_address   String
+  smart_account_id      Int
+  chain_id              Int
+  approved_call_targets String[]
+  native_token_limit    Float
+  start_date            DateTime
+  expiration_date       DateTime
+  txn_hash              String
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  chain                 chain         @relation(fields: [chain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  smart_account         smart_account @relation(fields: [smart_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

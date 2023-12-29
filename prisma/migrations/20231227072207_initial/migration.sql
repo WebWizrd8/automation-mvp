@@ -6,7 +6,7 @@ CREATE TYPE "connection_type" AS ENUM ('http', 'ws');
 
 -- CreateTable
 CREATE TABLE "chain" (
-    "id" SERIAL NOT NULL,
+    "id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
 
     CONSTRAINT "chain_pkey" PRIMARY KEY ("id")

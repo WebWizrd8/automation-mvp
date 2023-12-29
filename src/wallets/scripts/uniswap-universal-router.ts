@@ -131,6 +131,13 @@ async function run() {
     await smartWallet.getAddress(),
   );
 
+  await approveToken(
+    personalSdk,
+    USDC.address,
+    ethers.constants.MaxUint256.toString(),
+    await smartWallet.getAddress(),
+  );
+
   //This wallet will act as out backend server wallet
   const sessionWallet = new LocalWalletNode({
     storageJsonFile: "sec/sessionWallet.json",
