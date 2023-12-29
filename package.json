@@ -12,8 +12,7 @@
     "kill": "./scripts/kill.sh \"node dist/index.js\"",
     "test": "jest",
     "lint": "tsc --noEmit && eslint . ",
-    "prepare": "husky install",
-    "postinstall": "npx --yes thirdweb@latest generate"
+    "prepare": "husky install"
   },
   "author": "",
   "license": "ISC",
