@@ -40,7 +40,7 @@ INSERT INTO "public"."action" ("event_fetch_request_trigger_function_id", "user_
 		VALUES( 1, '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', 1, 'test_action',0, NOW(), false, NULL), ( 2, '0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', 1, 'test_alert', 0, NOW(), false, NULL);
 
 INSERT INTO "public"."action_condition" ("action_id", "field", "operator", "value")
-		VALUES( 1, '$."priceUsd"', 'gt', '2030'), ( 1, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."change_percentage"', 'gte', '3'), ( 2, '$."direction"', 'eq', '"UP"'), ( 1, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."chain_id"', 'eq', '1'), ( 2, '$."duration"', 'eq', '"30D"');
+		VALUES( 1, '$."priceUsd"', 'gt', '2030'), ( 1, '$."address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."change_percentage"', 'gte', '3'), ( 2, '$."direction"', 'eq', '"UP"'), ( 2, '$."token_address"', 'eq', '"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"'), ( 2, '$."chain_id"', 'eq', '1'), ( 2, '$."duration"', 'eq', '"30D"');
 
 INSERT INTO "public"."destination" ("action_id", "type", "destination_config") VALUES
 (1, 'telegram', '{"template": "ETH Price: {{priceUsd}}", "telegramChatId": "6200972469", "telegramUserId": "LakshyaSky"}'),
