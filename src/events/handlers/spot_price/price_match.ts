@@ -15,7 +15,7 @@ export async function handleSpotPriceMatchEvents(
 ) {
   try {
     for (const eventFetchRequestFunctionRecord of eventFetchRequestFunctionRecords) {
-      logger.info(
+      logger.debug(
         "eventFetchRequestFunctionRecord",
         eventFetchRequestFunctionRecord,
       );

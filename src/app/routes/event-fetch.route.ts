@@ -47,6 +47,27 @@ eventFetchRouter.post(
   },
 );
 
+eventFetchRouter.post(
+  "/base-listeners/trigger-with-actions/update/:id",
+  async (req, res) => {
+    /*  #swagger.parameters['body'] = {
+            in: 'body',
+            description: 'Update a trigger with actions',
+            schema: { $ref: '#/definitions/EventFetchRequest' }
+    } 
+*/
+    return await eventFetchController.updateEventFetchRequestFunctionWithActions(
+      req,
+      res,
+    );
+  },
+);
+
+eventFetchRouter.delete(
+  "/base-listeners/trigger-with-actions/delete/:id",
+  eventFetchController.deleteEventFetchRequestFunctionWithActions,
+);
+
 eventFetchRouter.get(
   "/base-listeners/:id",
   eventFetchController.getEventFetchRequestById,

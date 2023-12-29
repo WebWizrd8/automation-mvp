@@ -347,7 +347,7 @@ export class EventFetchRequestFunctionService {
     logger.info("Creating event fetch request trigger function", eventData);
 
     try {
-      await this.client.$transaction(async (tx) => {
+      const returnedRecord = await this.client.$transaction(async (tx) => {
         const event = await tx.event_fetch_request_trigger_function.create({
           data: {
             ...eventData,
@@ -410,11 +410,173 @@ export class EventFetchRequestFunctionService {
           //   }),
           // });
         }
+        return event;
       });
+      return returnedRecord;
     } catch (e) {
       logger.error("Error inserting action", e);
       throw e;
     }
+  }
+
+  async deleteEventFetchRequestFunctionWithActions(id: number) {
+    await this.client.$transaction(async (tx) => {
+      const event = await tx.event_fetch_request_trigger_function.findUnique({
+        where: { id },
+        include: { action: { include: { destination: true } } },
+      });
+      if (!event) {
+        throw new Error(`Event with id ${id} not found`);
+      }
+
+      const destinationIds = event.action.flatMap((action) => {
+        return action.destination.map((destination) => {
+          return destination.id;
+        });
+      });
+      await tx.destination.deleteMany({
+        where: { id: { in: destinationIds } },
+      });
+
+      const actionIds = event.action.map((action) => {
+        return action.id;
+      });
+
+      await tx.action.deleteMany({
+        where: { id: { in: actionIds } },
+      });
+
+      await tx.event_fetch_request_trigger_function.delete({
+        where: { id },
+      });
+    });
+  }
+
+  async updateEventFetchRequestFunctionWithActions(
+    id: number,
+    data: EventFetchRequestTriggerWithConditionsRequest,
+  ) {
+    // if functionArgs is null then make function_args optional and dont add it to eventData.
+    const functionArgs = data.functionArgs
+      ? data.functionArgs === "null"
+        ? null
+        : data.functionArgs
+      : null;
+
+    let eventData: {
+      event_fetch_request_id: number;
+      function_name: string;
+      function_args?: Prisma.InputJsonValue;
+      added_by: string;
+    };
+
+    if (!functionArgs) {
+      eventData = {
+        event_fetch_request_id: data.eventFetchRequestId,
+        function_name: data.functionName,
+        added_by: data.addedBy,
+      };
+    } else {
+      eventData = {
+        event_fetch_request_id: data.eventFetchRequestId,
+        function_name: data.functionName,
+        function_args: functionArgs ? JSON.parse(functionArgs) : null,
+        added_by: data.addedBy,
+      };
+    }
+
+    logger.info("Updating event fetch request trigger function", eventData);
+
+    await this.client.$transaction(async (tx) => {
+      const event = await tx.event_fetch_request_trigger_function.findUnique({
+        where: { id },
+        include: { action: { include: { destination: true } } },
+      });
+      if (!event) {
+        throw new Error(`Event with id ${id} not found`);
+      }
+
+      const destinationIds = event.action.flatMap((action) => {
+        return action.destination.map((destination) => {
+          return destination.id;
+        });
+      });
+      await tx.destination.deleteMany({
+        where: { id: { in: destinationIds } },
+      });
+
+      const actionIds = event.action.map((action) => {
+        return action.id;
+      });
+
+      await tx.action.deleteMany({
+        where: { id: { in: actionIds } },
+      });
+
+      await tx.event_fetch_request_trigger_function.update({
+        where: { id },
+        data: {
+          ...eventData,
+        },
+      });
+
+      for (const action of data.actions) {
+        const loopRules = prepareLoopRules(action);
+        const actionsResp = await tx.action.create({
+          data: {
+            name: action.name,
+            chain_id: action.chainId,
+            user_id: action.userId,
+            event_fetch_request_trigger_function_id: event.id,
+            executed: 0,
+            last_executed_at: null,
+            loop: loopRules.loop,
+            loop_config: loopRules.loopConfig
+              ? JSON.parse(loopRules.loopConfig)
+              : null,
+          },
+        });
+
+        for (const condition of action.conditions) {
+          const t = {
+            operator: condition.operator,
+            value: condition.value,
+            field: condition.field,
+            action_id: actionsResp.id,
+          };
+
+          const sql = Prisma.sql`INSERT INTO "action_condition" ("operator","value","field","action_id") VALUES (${t.operator}, CAST(${t.value}::text AS jsonb), CAST(${t.field}::text as jsonpath), ${t.action_id})`;
+
+          try {
+            const actionConditionRecord = await tx.$executeRaw(sql);
+            logger.info("Inserted action condition", actionConditionRecord);
+          } catch (e) {
+            logger.error("Error inserting action condition", e);
+            throw e;
+          }
+        }
+
+        for (const destination of action.destinations) {
+          const destinationRecord = {
+            action_id: actionsResp.id,
+            type: destination.destinationType,
+            destination_config: destination.destinationConfig,
+          };
+
+          await handleDestinationCreation(destinationRecord, loopRules, tx);
+        }
+
+        // await tx.destination.createMany({
+        //   data: action.destinations.map((destination) => {
+        //     return {
+        //       action_id: actionsResp.id,
+        //       type: destination.destinationType,
+        //       destination_config: JSON.parse(destination.destinationConfig),
+        //     };
+        //   }),
+        // });
+      }
+    });
   }
 }
 

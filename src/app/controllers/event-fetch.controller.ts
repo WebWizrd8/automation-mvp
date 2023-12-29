@@ -94,7 +94,45 @@ export async function createEventFetchRequestFunctionWithActions(
     );
     res.status(400).send(parsedEvent.error.issues);
   } else {
-    await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
+    const returnedRecord =
+      await eventFetchRequestFunctionService.createEventFetchRequestFunctionForIdWithActions(
+        parsedEvent.data,
+      );
+    res.send(returnedRecord);
+  }
+
+  res.send({});
+}
+
+export async function deleteEventFetchRequestFunctionWithActions(
+  req: Request,
+  res: Response,
+) {
+  const id = Number(req.params.id);
+  await eventFetchRequestFunctionService.deleteEventFetchRequestFunctionWithActions(
+    id,
+  );
+  res.send({});
+}
+
+export async function updateEventFetchRequestFunctionWithActions(
+  req: Request,
+  res: Response,
+) {
+  const body = req.body;
+  const id = Number(req.params.id);
+
+  const parsedEvent =
+    EventFetchRequestTriggerWithConditionsRequestSchema.safeParse(body);
+  if (!parsedEvent.success) {
+    logger.error(
+      "Error parsing event fetch request trigger function",
+      parsedEvent.error,
+    );
+    res.status(400).send(parsedEvent.error.issues);
+  } else {
+    await eventFetchRequestFunctionService.updateEventFetchRequestFunctionWithActions(
+      id,
       parsedEvent.data,
     );
   }
