@@ -19,7 +19,7 @@ async function registerUser(req: Request, res: Response) {
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       logger.error("Error registering user", e);
-      res.status(400).send("Error registering user");
+      res.status(500).send("Error registering user");
     }
   }
   res.status(200).send();

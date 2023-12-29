@@ -12,8 +12,9 @@ export async function getActiveBackendWalletByChainId(
     },
   });
   switch (chainId) {
-    default:
     case EVMChainId.ETH:
-      return await sessionWallet.getAddress();
+      return "0x9Aa13F15BdC45995b86e43129681693077f39777";
+    default:
+      return "0x9Aa13F15BdC45995b86e43129681693077f39777";
   }
 }
