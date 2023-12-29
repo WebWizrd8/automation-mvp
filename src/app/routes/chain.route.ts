@@ -6,8 +6,4 @@ const router = Router();
 
 router.get("/chains", chainsController.getAllChains);
 
-// eventFetchRouter.get( "/base-listeners/:id",
-//   eventFetchController.getEventFetchRequestById,
-// );
-
 export default router;

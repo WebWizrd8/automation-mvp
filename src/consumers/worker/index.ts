@@ -3,8 +3,8 @@
 import "dotenv/config";
 import { parentPort, workerData } from "worker_threads";
 import { getLogger } from "../../utils/logger";
-import { handleOnMessage } from "./event_handler";
 import { EventFetchRequestRecord } from "../../db/event";
+import { handleOnMessage } from "../../events/handlers";
 
 export interface ConsumerWorkerData {
   eventFetchRequestRecord: EventFetchRequestRecord;

@@ -107,7 +107,9 @@ export async function approveToken(
     await sdk.wallet.getAddress(),
     permit2Address,
   ]);
+
   logger.debug(`Allowance for ${permit2Address}:  ${allowance.toString()}`);
+
   if (!allowance.gte(amount)) {
     logger.debug(`Approving token allowance for ${permit2Address}`);
     const txApprove = erc20Contract.prepare("approve", [

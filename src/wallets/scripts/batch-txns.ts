@@ -87,7 +87,7 @@ async function run() {
   console.log("Address: ", await personalWallet.getAddress());
   console.log("Balance: ", await personalWallet.getBalance());
   console.log("--------------------------------------");
-  const personalSdk = await getSdk(personalWallet);
+  const _personalSdk = await getSdk(personalWallet);
 
   // await mintWMatic(personalSdk, "1");
   //Transfer some WMATIC to the smart wallet
@@ -482,7 +482,7 @@ async function balance(sdk: ThirdwebSDK, token: string) {
   return JSBI.BigInt(balance.toString());
 }
 
-const mintWMatic = async (sdk: ThirdwebSDK, amount: string) => {
+const _mintWMatic = async (sdk: ThirdwebSDK, amount: string) => {
   const wMaticContract = await sdk.getContract(WMATIC.address);
   const txDeposit = wMaticContract.prepare("deposit", [], {
     value: ethers.utils.parseEther(amount),

@@ -141,7 +141,7 @@ export class AccountsService {
     const backendWallets = [
       new BackendWallet({
         id: 1,
-        address: getActiveBackendWalletByChainId(1),
+        address: await getActiveBackendWalletByChainId(1),
         chainId: 1,
         createdAt: new Date(),
       }),

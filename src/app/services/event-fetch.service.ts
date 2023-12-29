@@ -162,6 +162,79 @@ export class EventFetchRequestFunctionService {
     return fnNamesWithConditions;
   }
 
+  async getAllEventFetchRequestFunctionsWithActions(filter?: {
+    userId: string;
+  }): Promise<EventFetchRequestTriggerWithConditionsResponse[]> {
+    let events;
+    if (filter) {
+      events = await this.client.event_fetch_request_trigger_function.findMany({
+        where: { added_by: filter.userId },
+        include: { action: { include: { destination: true } } },
+      });
+    } else {
+      events = await this.client.event_fetch_request_trigger_function.findMany({
+        include: { action: { include: { destination: true } } },
+      });
+    }
+    const mappedEvents = [];
+    for (const event of events) {
+      const actionsWithConditions = [];
+      for (const action of event.action) {
+        const prismaSql = Prisma.sql`SELECT id,action_id,field::VARCHAR,operator,value FROM "action_condition" WHERE "action_id" = ${action.id}`;
+        const actionConditionsRecords: ActionConditionRecord[] =
+          await this.client.$queryRaw(prismaSql);
+
+        const destinations = [];
+        for (const destination of action.destination) {
+          switch (destination.type) {
+            case "discord":
+            case "telegram":
+            case "onchain": {
+              destinations.push({
+                id: destination.id,
+                destinationType: destination.type,
+                destinationConfig: JSON.stringify(
+                  destination.destination_config,
+                ),
+              });
+              break;
+            }
+            case "webhook":
+            default:
+              logger.error("Unknown destination type");
+          }
+        }
+        const actionWithConditions = {
+          id: action.id,
+          name: action.name,
+          chainId: action.chain_id,
+          conditions: actionConditionsRecords!.map((condition) => {
+            return {
+              id: condition.id,
+              operator: condition.operator,
+              value: JSON.stringify(condition.value),
+              field: condition.field,
+            };
+          }),
+          destinations,
+        };
+        actionsWithConditions.push(actionWithConditions);
+      }
+      const mappedEvent = {
+        id: event.id,
+        eventFetchRequestId: event.event_fetch_request_id,
+        functionName: event.function_name,
+        functionArgs: event.function_args
+          ? JSON.stringify(event.function_args)
+          : null,
+        addedBy: event.added_by,
+        actions: actionsWithConditions,
+      };
+      mappedEvents.push(mappedEvent);
+    }
+    return mappedEvents;
+  }
+
   async getEventFetchRequestFunctionForIdWithActions(
     id: number,
   ): Promise<EventFetchRequestTriggerWithConditionsResponse | null> {
@@ -191,15 +264,9 @@ export class EventFetchRequestFunctionService {
       const destinations = [];
       for (const destination of action.destination) {
         switch (destination.type) {
-          case "discord": {
-            destinations.push({
-              id: destination.id,
-              destinationType: destination.type,
-              destinationConfig: JSON.stringify(destination.destination_config),
-            });
-            break;
-          }
-          case "telegram": {
+          case "discord":
+          case "telegram":
+          case "onchain": {
             destinations.push({
               id: destination.id,
               destinationType: destination.type,
@@ -228,6 +295,7 @@ export class EventFetchRequestFunctionService {
       };
       actionsWithConditions.push(actionWithConditions);
     }
+
     const mappedEvent = {
       id: event.id,
       eventFetchRequestId: event.event_fetch_request_id,
@@ -245,12 +313,36 @@ export class EventFetchRequestFunctionService {
   async createEventFetchRequestFunctionForIdWithActions(
     data: EventFetchRequestTriggerWithConditionsRequest,
   ) {
-    const eventData = {
-      event_fetch_request_id: data.eventFetchRequestId,
-      function_name: data.functionName,
-      function_args: data.functionArgs ? JSON.parse(data.functionArgs) : null,
-      added_by: data.addedBy,
+    // if functionArgs is null then make function_args optional and dont add it to eventData.
+    const functionArgs = data.functionArgs
+      ? data.functionArgs === "null"
+        ? null
+        : data.functionArgs
+      : null;
+
+    let eventData: {
+      event_fetch_request_id: number;
+      function_name: string;
+      function_args?: Prisma.InputJsonValue;
+      added_by: string;
     };
+
+    if (!functionArgs) {
+      eventData = {
+        event_fetch_request_id: data.eventFetchRequestId,
+        function_name: data.functionName,
+        added_by: data.addedBy,
+      };
+    } else {
+      eventData = {
+        event_fetch_request_id: data.eventFetchRequestId,
+        function_name: data.functionName,
+        function_args: functionArgs ? JSON.parse(functionArgs) : null,
+        added_by: data.addedBy,
+      };
+    }
+
+    console.log("functionArgs", eventData);
 
     logger.info("Creating event fetch request trigger function", eventData);
 
@@ -354,6 +446,7 @@ async function handleDestinationCreation(
   loopRules: { loop: boolean; loopConfig: string | null },
   tx: PrismaClient | PrismaClientTrans,
 ) {
+  const destinationConfig = JSON.parse(destinationRecord.destination_config);
   switch (destinationRecord.type) {
     case "discord": {
       break;
@@ -365,10 +458,6 @@ async function handleDestinationCreation(
       break;
     }
     case "onchain": {
-      const destinationConfig = JSON.parse(
-        destinationRecord.destination_config,
-      );
-
       switch (destinationConfig.txnType) {
         case "UNISWAP_V3_TRADE": {
           const accountAddress = destinationConfig.accountAddress;
@@ -419,6 +508,6 @@ async function handleDestinationCreation(
   }
 
   await tx.destination.create({
-    data: destinationRecord,
+    data: { ...destinationRecord, destination_config: destinationConfig },
   });
 }

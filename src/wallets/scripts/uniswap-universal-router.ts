@@ -456,7 +456,7 @@ async function balance(sdk: ThirdwebSDK, token: string) {
   return JSBI.BigInt(balance.toString());
 }
 
-const mintWMatic = async (sdk: ThirdwebSDK, amount: string) => {
+const _mintWMatic = async (sdk: ThirdwebSDK, amount: string) => {
   const wMaticContract = await sdk.getContract(WMATIC.address);
   const txDeposit = wMaticContract.prepare("deposit", [], {
     value: ethers.utils.parseEther(amount),
