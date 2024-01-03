@@ -179,6 +179,6 @@ select find_matching_actions('{
   "direction": "UP"
 }');
 
-INSERT INTO "public"."account_factory" ("address", "chain_id", "active") VALUES ('0xC0b522846a965345d4135ae5d55cF2954D3aF82a', 1, 't');
+INSERT INTO "public"."account_factory" ("address", "chain_id", "active") VALUES ('0xC0b522846a965345d4135ae5d55cF2954D3aF82a', 80001, 't');
 
 INSERT INTO "public"."smart_account" ("user_address", "wallet_address", "factory_id", "chain_id", "active") VALUES ('0xa9b30F2E67c9eBDCB3aa98CF400c71AC62bD25d6', '0x7780CcB62782b58c34A51837097B3BD2BD2c4416', 1, 1, 't');
